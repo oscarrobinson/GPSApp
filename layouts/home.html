@@ -51,14 +51,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.8/angular.js"></script>
     <script>
     var app = angular.module('app', [])
-    app.controller('ProjectsCtrl', function($scope) {
-        $scope.projects = [{
-            name: "school 1"
-        }, {
-            name: "school 2"
-        }, {
-            name: "school 3"
-        }]
+    app.controller('ProjectsCtrl', function($scope, $http) {
+        $http.get('/api/projects')
+            .success(function(projects) {
+                $scope.projects = projects
+            })
     })
     </script>
 </body>
