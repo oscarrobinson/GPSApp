@@ -1,0 +1,14 @@
+<div class="container">
+    <h1>My Projects</h1>
+    <a href="/#/newproject">
+        <button type="button" class="btn btn-default">New Project <span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+    </a>
+    <div class='list-group'>
+        <a href="/#/projects/{{ project._id }}" ng-repeat="project in projects">
+            <button type="button" class='list-group-item'>
+                {{ project.name }}
+                <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>
+            </button>
+        </a>
+    </div>
+</div>
