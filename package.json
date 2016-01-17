@@ -6,6 +6,7 @@
     "mongoose": "^4.3.4"
   },
   "devDependencies": {
+    "mocha": "^2.3.4",
     "protractor": "^3.0.0"
   }
 }
