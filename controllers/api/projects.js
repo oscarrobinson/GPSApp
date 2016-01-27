@@ -19,18 +19,38 @@ router.post('/api/projects', function(req, res, next) {
         if (err) {
             return next(err)
         }
-        res.json(201, project)
+        res.status(201).json(project)
     })
 })
 
 router.get('/api/projects/:id', function(req, res, next) {
-    Project.find({
+    Project.findOne({
         _id: req.params.id
     }, function(err, project) {
         if (err) {
             return next(err)
         }
-        res.json(project)
+        res.status(200).json(project)
+    })
+})
+
+router.post('/api/projects/:id/templates', function(req, res, next) {
+
+    Project.findById(req.params.id, function(err, project) {
+        if (err) {
+            return next(err)
+        }
+        project.templates.push({
+            name: req.body.name,
+            fields: req.body.fields
+        })
+        project.save(function(err, result) {
+            if (err) {
+                return next(err)
+            } else {
+                res.status(201).json(result)
+            }
+        })
     })
 })
 
@@ -39,9 +59,9 @@ router.delete('/api/projects/:id', function(req, res, next) {
         _id: req.params.id
     }, function(err) {
         if (err) {
-            return next(err)
+            res.status(500).send('Project Not Found')
         }
-        res.json(201)
+        res.status(201).json()
     })
 })
 

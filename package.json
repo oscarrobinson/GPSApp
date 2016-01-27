@@ -1,12 +1,22 @@
 {
-  "name": "gpsapp",
-  "dependencies": {
-    "body-parser": "^1.14.2",
-    "express": "^4.13.3",
-    "mongoose": "^4.3.4"
-  },
-  "devDependencies": {
-    "mocha": "^2.3.4",
-    "protractor": "^3.0.0"
-  }
+    "name": "gpsapp",
+    "dependencies": {
+        "body-parser": "^1.14.2",
+        "express": "^4.13.3",
+        "mongoose": "^4.3.4"
+    },
+    "devDependencies": {
+        "chai": "^3.4.1",
+        "karma": "^0.13.19",
+        "karma-chai": "^0.1.0",
+        "karma-mocha": "^0.2.1",
+        "karma-phantomjs-launcher": "^0.2.3",
+        "mocha": "^2.3.4",
+        "phantomjs": "^1.9.19",
+        "protractor": "^3.0.0",
+        "supertest": "^1.1.0"
+    },
+    "scripts": {
+        "test": "echo _______BACKEND TEST_______;mocha;echo _______FRONTEND TEST_______; karma start --single-run "
+    }
 }

@@ -1,0 +1,49 @@
+<style>
+#confirm-btn {
+    margin-top: 30px;
+}
+
+.remove-field:hover {
+    color: gray;
+    cursor: pointer;
+}
+
+.remove-field {
+    margin-top: 7px;
+}
+</style>
+<div class="container">
+    <h1>New Template</h1>
+    <form class="form-horizontal">
+        <h3>Template Attributes</h3>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Template Name</label>
+            <div class="col-sm-6">
+                <input ng-model="templateName" ng-change="updateName(templateName)" class="form-control" placeholder="Template Name">
+            </div>
+        </div>
+        <h3>Template Fields</h3>
+        <div class="form-group" ng-repeat="field in fields">
+            <label class="col-sm-2 control-label">Field Name</label>
+            <div class="col-sm-2">
+                <input ng-model="fieldName" ng-change="fieldTypeNameChange($index, fieldName)" class="form-control" placeholder="Field {{ $index+1 }}">
+            </div>
+            <label class="col-sm-2 control-label">Field Type</label>
+            <div class="col-sm-2">
+                <select ng-model="fieldTypeSelected" ng-options="fieldType.lookup as fieldType.description for fieldType in fieldTypeSelectorState" class="form-control" ng-change="changeFieldType($index, fieldTypeSelected)" name="fieldTypes">
+                </select>
+            </div>
+            <div class="col-sm-1">
+                <span ng-click="removeField($index)" class="remove-field glyphicon glyphicon-remove" aria-hidden="true"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-6">
+                <button class=" btn btn-default " ng-click="addField() "><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Field</button>
+            </div>
+        </div>
+        <button id="confirm-btn" class=" btn btn-primary " ng-click="createTemplate() "><span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> Create Template</button>
+    </form>
+</div>

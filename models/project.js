@@ -1,6 +1,33 @@
 var db = require('../db')
 
-var Project = db.model('Project', {
+var TemplateField = new db.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    type: {
+        type: String,
+        required: true
+    }
+}, {
+    strict: true
+})
+
+var Template = new db.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    fields: {
+        type: [TemplateField],
+        required: false
+    }
+
+}, {
+    strict: true
+})
+
+var Project = new db.Schema({
     name: {
         type: String,
         required: true
@@ -9,7 +36,14 @@ var Project = db.model('Project', {
         type: String,
         required: false,
         default: ""
+    },
+    templates: {
+        type: [Template],
+        required: false
     }
+}, {
+    strict: true
 })
+var ProjectModel = db.model('Project', Project)
 
-module.exports = Project
+module.exports = ProjectModel

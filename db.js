@@ -1,6 +1,4 @@
 db = require('mongoose')
 
-db.connect('mongodb://localhost/gpsapp', function() {
-    console.log('mongodb connected')
-})
+db.connect('mongodb://localhost/gpsapp')
 module.exports = db

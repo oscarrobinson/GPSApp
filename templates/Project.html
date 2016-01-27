@@ -1,4 +1,62 @@
+<style>
+.list-group {
+    height: 250px;
+    overflow-y: auto;
+}
+
+#session-list {
+    height: 590px;
+}
+
+.create-button {
+    float: right;
+}
+
+h2 {
+    display: inline;
+}
+</style>
 <div class="container">
     <h1>{{ project.name }}</h1>
-    <button ng-click="deleteProject()" class="btn btn-default">Delete Project</button>
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Object Instances</h2>
+            <button ng-click="createInstance()" class="btn btn-default create-button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Instance</button>
+            <input id="instance-search" ng-model="instanceSearch" type="text" class="form-control" placeholder="Search Instances...">
+            <div class='list-group'>
+                <a href="/#/projects/{{ project._id }}/object-instances/{{ instance._id }}" ng-repeat="instance in instances | filter:instanceSearch">
+                    <button type="button" class='list-group-item'>
+                        {{ instance.easyId }}
+                        <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>
+                    </button>
+                </a>
+            </div>
+            <h2>Object Templates</h2>
+            <button ng-click="createTemplate()" class="btn btn-default create-button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Template</button>
+            <input id="template-search" ng-model="templateSearch" type="text" class="form-control" placeholder="Search Templates...">
+            <p ng-hide="hasTemplates">No Templates in Project</p>
+            <div class='list-group'>
+                <a href="/#/object-templates/{{ template._id }}" ng-repeat="template in templates | filter:templateSearch">
+                    <button type="button" class='list-group-item'>
+                        {{ template.name }}
+                        <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>
+                    </button>
+                </a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h2>Sessions</h2>
+            <button ng-click="createSession()" class="btn btn-default create-button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Session</button>
+            <input id="session-search" ng-model="sessionSearch" type="text" class="form-control" placeholder="Search Sessions...">
+            <div class='list-group' id="session-list">
+                <a href="/#/projects/{{ project._id }}/sessions/{{ session._id }}" ng-repeat="session in sessions | filter:sessionSearch">
+                    <button type="button" class='list-group-item'>
+                        {{ session.startTime }}
+                        <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <button ng-click="deleteProject()" class="btn btn-default"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Project</button>
 </div>
