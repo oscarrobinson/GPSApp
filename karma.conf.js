@@ -6,6 +6,8 @@ module.exports = function(config) {
             'assets/angular-route/angular-route.js',
             'assets/angular-mocks/angular-mocks.js',
             'assets/app.js',
+            'assets/angular-animate/angular-animate.js',
+            'assets/AngularJS-Toaster/toaster.js',
             'test/ng/*.spec.js',
         ],
         reporters: ['progress'],

@@ -66,7 +66,7 @@ describe('Project Tests', function() {
     })
     it('Error if no project with id found to delete', function(done) {
         api.delete('/api/projects/notacorrectid')
-            .expect(500)
+            .expect(404)
             .end(function(err, res) {
                 expect(res.error.text).to.equal('Project Not Found')
                 done(err)

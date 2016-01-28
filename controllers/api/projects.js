@@ -46,7 +46,7 @@ router.post('/api/projects/:id/templates', function(req, res, next) {
         })
         project.save(function(err, result) {
             if (err) {
-                return next(err)
+                res.status(400).send('Incorrect Data')
             } else {
                 res.status(201).json(result)
             }
@@ -59,7 +59,7 @@ router.delete('/api/projects/:id', function(req, res, next) {
         _id: req.params.id
     }, function(err) {
         if (err) {
-            res.status(500).send('Project Not Found')
+            res.status(404).send('Project Not Found')
         }
         res.status(201).json()
     })

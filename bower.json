@@ -1,24 +1,28 @@
 {
-    "name": "gpsapp",
-    "description": "",
-    "main": "",
-    "authors": [
-        "Oscar Robinson <oscar.w.robinson@gmail.com>"
-    ],
-    "license": "MIT",
-    "moduleType": [],
-    "homepage": "",
-    "private": true,
-    "ignore": [
-        "**/.*",
-        "node_modules",
-        "bower_components",
-        "test",
-        "tests"
-    ],
-    "dependencies": {
-        "angular": "~1.4.8",
-        "angular-mocks": "~1.4.8",
-        "angular-route": "~1.4.8"
-    }
+  "name": "gpsapp",
+  "description": "",
+  "main": "",
+  "authors": [
+    "Oscar Robinson <oscar.w.robinson@gmail.com>"
+  ],
+  "license": "MIT",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.4.9",
+    "angular-mocks": "~1.4.8",
+    "angular-route": "~1.4.8",
+    "AngularJS-Toaster": "angularjs-toaster#~1.0.0"
+  },
+  "resolutions": {
+    "angular": "~1.4.8"
+  }
 }

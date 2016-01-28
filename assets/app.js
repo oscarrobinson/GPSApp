@@ -1,5 +1,7 @@
 angular.module('app', [
-    'ngRoute'
+    'ngRoute',
+    'toaster',
+    'ngAnimate'
 ])
 
 
@@ -40,17 +42,20 @@ angular.module('app').service('ProjectsSvc', function($http) {
     this.delete = function(id) {
         return $http.delete('/api/projects/' + id)
     }
-    this.addTemplate = function(id, name, fields) {
-        return $http.post('/api/projects/' + id + '/templates', {
-            name: name,
-            fields: fields
-        })
-    }
 })
 
 angular.module('app').service('InstancesSvc', function($http) {
     this.fetch = function(projectId) {
         return dummyData
+    }
+})
+
+angular.module('app').service('TemplatesSvc', function($http) {
+    this.addTemplate = function(id, name, fields) {
+        return $http.post('/api/projects/' + id + '/templates', {
+            name: name,
+            fields: fields
+        })
     }
 })
 
@@ -161,7 +166,7 @@ angular.module('app').controller('NewProjectCtrl', function($scope, $location, P
     }
 })
 
-angular.module('app').controller('NewTemplateCtrl', function($scope, $routeParams, $location, ProjectsSvc) {
+angular.module('app').controller('NewTemplateCtrl', function($scope, $routeParams, $location, TemplatesSvc, toaster) {
     $scope.fieldTypes = ["string", "number", "date/time"]
     $scope.fields = [{
         name: "",
@@ -180,7 +185,7 @@ angular.module('app').controller('NewTemplateCtrl', function($scope, $routeParam
     $scope.addField = function() {
         $scope.fields.push({
             name: "",
-            type: "String"
+            type: "string"
         })
     }
     $scope.templateName = ""
@@ -198,7 +203,17 @@ angular.module('app').controller('NewTemplateCtrl', function($scope, $routeParam
         $scope.fields[index].name = fieldName;
     }
     $scope.createTemplate = function() {
-        ProjectsSvc.addTemplate($routeParams.id, $scope.templateName, $scope.fields)
-        $location.path('/projects/' + $routeParams.id)
+        TemplatesSvc.addTemplate($routeParams.id, $scope.templateName, $scope.fields).then(function(res) {
+            $location.path('/projects/' + $routeParams.id);
+        }).catch(function(res) {
+            toaster.pop({
+                type: 'error',
+                title: "Template Error",
+                body: "You must give your termplate and all fields a name",
+                showCloseButton: true,
+                timeout: 3000
+            });
+        })
+
     }
 })
