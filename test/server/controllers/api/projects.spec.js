@@ -33,10 +33,30 @@ describe('Project Tests', function() {
             })
         done()
     })
+    var templateId;
     it('Add template to project', function(done) {
         api.post('/api/projects/' + projectId + '/templates')
             .send({
-                name: "child:",
+                name: "child",
+                fields: [{
+                    name: "age",
+                    type: "int"
+                }]
+            })
+            .expect(201)
+            .end(function(err, res) {
+                templateId = res.body.templates[0]._id
+                Project.findById(projectId, function(err, project) {
+                    expect(project.templates.length).to.equal(1)
+                    done(err)
+                })
+            })
+
+    })
+    it('Edit the template', function(done) {
+        api.put('/api/projects/' + projectId + '/templates/' + templateId)
+            .send({
+                name: "childUpdate",
                 fields: [{
                     name: "age",
                     type: "int"
@@ -45,11 +65,10 @@ describe('Project Tests', function() {
             .expect(201)
             .end(function(err, res) {
                 Project.findById(projectId, function(err, project) {
-                    expect(project.templates.length).to.equal(1)
+                    expect(project.templates.id(templateId).name).to.equal("childUpdate")
                     done(err)
                 })
             })
-
     })
     it('Delete a project', function(done) {
         api.delete('/api/projects/' + projectId)

@@ -36,7 +36,7 @@ h2 {
             <input id="template-search" ng-model="templateSearch" type="text" class="form-control" placeholder="Search Templates...">
             <p ng-hide="hasTemplates">No Templates in Project</p>
             <div class='list-group'>
-                <a href="/#/object-templates/{{ template._id }}" ng-repeat="template in templates | filter:templateSearch">
+                <a href="/#/projects/{{ project._id }}/object-templates/{{ template._id }}" ng-repeat="template in templates | filter:templateSearch">
                     <button type="button" class='list-group-item'>
                         {{ template.name }}
                         <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>

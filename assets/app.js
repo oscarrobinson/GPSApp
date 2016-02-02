@@ -20,8 +20,12 @@ angular.module('app').config(function($routeProvider) {
         templateUrl: 'Project.html'
     })
     $routeProvider.when('/projects/:id/create-template', {
-        controller: 'NewTemplateCtrl',
-        templateUrl: 'CreateTemplate.html'
+        controller: 'TemplateCtrl',
+        templateUrl: 'Template.html'
+    })
+    $routeProvider.when('/projects/:id/object-templates/:templateId', {
+        controller: 'TemplateCtrl',
+        templateUrl: 'Template.html'
     })
 })
 
@@ -57,26 +61,47 @@ angular.module('app').service('TemplatesSvc', function($http) {
             fields: fields
         })
     }
+    this.editTemplate = function(projectId, templateId, name, fields) {
+        return $http.put('/api/projects/' + projectId + '/templates/' + templateId, {
+            name: name,
+            fields: fields
+        })
+    }
+    this.getTemplate = function(projectId, templateId) {
+        return $http.get('/api/projects/' + projectId + '/templates/' + templateId)
+    }
 })
 
 
 //CONTROLLERS
-angular.module('app').controller('LoggedInHomeCtrl', function($scope, ProjectsSvc) {
+angular.module('app').controller('LoggedInHomeCtrl', function($scope, ProjectsSvc, toaster) {
     ProjectsSvc.fetch().then(function(res) {
-        console.log(res.data)
         $scope.projects = res.data
     }).catch(function(res) {
-        console.log("ERROR")
+        toaster.pop({
+            type: 'error',
+            title: "Error",
+            body: "There is a server problem, couldn't load your projects",
+            showCloseButton: true,
+            timeout: 3000
+        });
+
     })
 })
 
-angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParams, $location, ProjectsSvc, InstancesSvc) {
+angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParams, $location, ProjectsSvc, InstancesSvc, toaster) {
     ProjectsSvc.fetchOne($routeParams.id).then(function(res) {
         $scope.project = res.data
         $scope.templates = $scope.project.templates
         $scope.hasTemplates = $scope.templates.length
     }).catch(function(res) {
-        console.log("ERROR")
+        toaster.pop({
+            type: 'error',
+            title: "Error",
+            body: "There is a server problem, all project information could not be loaded",
+            showCloseButton: true,
+            timeout: 3000
+        });
     })
     $scope.instances = [{
         easyId: 2314,
@@ -138,8 +163,20 @@ angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParam
     $scope.deleteProject = function() {
         ProjectsSvc.delete($routeParams.id).then(function() {
             $location.path('/');
+            toaster.pop({
+                type: 'success',
+                title: "Project Deleted",
+                showCloseButton: true,
+                timeout: 3000
+            });
         }).catch(function(res) {
-            console.log("ERROR")
+            toaster.pop({
+                type: 'error',
+                title: "Error",
+                body: "Couldn't delete project, project not found",
+                showCloseButton: true,
+                timeout: 3000
+            });
         })
     }
     $scope.createInstance = function() {
@@ -156,22 +193,32 @@ angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParam
     }
 })
 
-angular.module('app').controller('NewProjectCtrl', function($scope, $location, ProjectsSvc) {
+angular.module('app').controller('NewProjectCtrl', function($scope, $location, ProjectsSvc, toaster) {
     $scope.addProject = function() {
         ProjectsSvc.send($scope.projectName, $scope.projectDescription).then(function(res) {
             $location.path('/projects/' + res.data._id);
+            toaster.pop({
+                type: 'success',
+                title: "Project Created",
+                body: "Project " + $scope.projectName + " created",
+                showCloseButton: true,
+                timeout: 3000
+            });
         }).catch(function(res) {
-            console.log("ERROR")
+            toaster.pop({
+                type: 'error',
+                title: "Error",
+                body: "There is a server problem, your project could not be created",
+                showCloseButton: true,
+                timeout: 3000
+            });
         })
     }
 })
 
-angular.module('app').controller('NewTemplateCtrl', function($scope, $routeParams, $location, TemplatesSvc, toaster) {
+angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, $location, TemplatesSvc, toaster) {
+    $scope.editPage = $routeParams.templateId ? true : false
     $scope.fieldTypes = ["string", "number", "date/time"]
-    $scope.fields = [{
-        name: "",
-        type: "String"
-    }]
     $scope.fieldTypeSelectorState = [{
         lookup: "string",
         description: "String"
@@ -188,28 +235,52 @@ angular.module('app').controller('NewTemplateCtrl', function($scope, $routeParam
             type: "string"
         })
     }
-    $scope.templateName = ""
     $scope.updateName = function(name) {
         $scope.templateName = name
     }
     $scope.removeField = function(index) {
         $scope.fields.splice(index, 1)
     }
-
     $scope.changeFieldType = function(index, fieldTypeSelected) {
         $scope.fields[index].type = fieldTypeSelected;
     }
     $scope.fieldTypeNameChange = function(index, fieldName) {
         $scope.fields[index].name = fieldName;
     }
-    $scope.createTemplate = function() {
-        TemplatesSvc.addTemplate($routeParams.id, $scope.templateName, $scope.fields).then(function(res) {
+
+    if ($routeParams.templateId) {
+        TemplatesSvc.getTemplate($routeParams.id, $routeParams.templateId).then(function(template) {
+            $scope.fields = template.data.fields
+            $scope.templateName = template.data.name
+            console.log($scope.fields)
+        })
+    } else {
+        $scope.fields = [{
+            name: "",
+            type: "string"
+        }]
+        $scope.templateName = ""
+    }
+
+    $scope.submitTemplate = function() {
+        if ($routeParams.templateId) {
+            var templateAction = TemplatesSvc.editTemplate($routeParams.id, $routeParams.templateId, $scope.templateName, $scope.fields)
+        } else {
+            var templateAction = TemplatesSvc.addTemplate($routeParams.id, $scope.templateName, $scope.fields)
+        }
+        templateAction.then(function(res) {
             $location.path('/projects/' + $routeParams.id);
+            toaster.pop({
+                type: 'success',
+                title: "Template Saved",
+                showCloseButton: true,
+                timeout: 3000
+            });
         }).catch(function(res) {
             toaster.pop({
                 type: 'error',
                 title: "Template Error",
-                body: "You must give your termplate and all fields a name",
+                body: "You must give your template and all fields a name",
                 showCloseButton: true,
                 timeout: 3000
             });
