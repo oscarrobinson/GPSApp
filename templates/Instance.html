@@ -1,0 +1,36 @@
+<div class="container">
+    <h1>{{{true: 'Edit Instance', false: 'New Instance'}[editPage]}}</h1>
+    <form class="form-horizontal">
+        <h3>{{{true: '', false: ' Select '}[editPage]}}Template</h3>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Template</label>
+            <div class="col-sm-2">
+                <select ng-if="createPage" ng-model="templates[$index]" ng-options="template.name for template in templates" class="form-control" ng-change="changeTemplate(templates[$index])" name="chooseTemplate">
+                </select>
+                <p ng-if="editPage">{{ template.name}}</p>
+            </div>
+        </div>
+        <h3>Template Fields</h3>
+        <div class="form-group col-sm-12" ng-repeat="field in fields">
+            <label class="col-sm-2 control-label">{{ field.name }}</label>
+            <div ng-switch on="field.type" class="col-sm-6">
+                <input type="text" ng-model="fieldsWithValues[$index].value" ng-change="fieldValueChange($index)" ng-switch-when="string" ng-change="fieldTypeNameChange($index, fields[$index].name)" class="form-control" placeholder="Field {{ $index+1 }}">
+                <input type="text" ng-model="fieldsWithValues[$index].value" ng-change="fieldValueChange($index)" ng-switch-when="number" class="form-control" placeholder="Field {{ $index+1 }}">
+                <div ng-switch-when="time" class="input-group bootstrap-timepicker timepicker">
+                    <p ng-if="editPage"><b>Original: </b>{{ fieldsWithValues[$index].original }}</p>
+                    <input ng-model="fieldsWithValues[$index].value" ng-change="fieldValueChange($index)" id="timepicker-{{field.name}}{{$index}}" type="text" class="form-control input-small" data-timepicker>
+                    <span class="input-group-addon"><i class="glyphicon glyphicon-time"></i></span>
+                </div>
+                <div ng-switch-when="date" class="input-group date">
+                    <p ng-if="editPage"><b>Original: </b>{{ fieldsWithValues[$index].original }}</p>
+                    <input ng-model="fieldsWithValues[$index].value" ng-change="fieldValueChange($index)" type="text" class="form-control" data-datepicker>
+                    <div class="input-group-addon">
+                        <span class="glyphicon glyphicon-th "></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="cancel-btn" class=" btn btn-default " ng-click="cancel() "><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
+        <button id="confirm-btn" class=" btn btn-primary " ng-click="submitInstance() "><span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>{{{true: ' Save Changes', false: ' Save Instance'}[editPage]}}</button>
+    </form>
+</div>

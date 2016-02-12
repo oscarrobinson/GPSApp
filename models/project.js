@@ -27,6 +27,37 @@ var Template = new db.Schema({
     strict: true
 })
 
+function toString(input) {
+    return JSON.stringify(input)
+}
+
+function toObj(out) {
+    return JSON.parse(out)
+}
+
+var Instance = new db.Schema({
+    id: {
+        type: Number,
+        required: true
+    },
+    type: {
+        type: String,
+        required: true
+    },
+    //expects js object in and saves as json string
+    //spits out js object with getter
+    fields: {
+        type: String,
+        required: false,
+        default: "",
+        set: toString,
+        get: toObj
+    }
+
+}, {
+    strict: true
+})
+
 var Project = new db.Schema({
     name: {
         type: String,
@@ -40,10 +71,15 @@ var Project = new db.Schema({
     templates: {
         type: [Template],
         required: false
+    },
+    instances: {
+        type: [Instance],
+        required: false
     }
 }, {
     strict: true
 })
+
 var ProjectModel = db.model('Project', Project)
 
 module.exports = ProjectModel

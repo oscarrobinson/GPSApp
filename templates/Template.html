@@ -1,5 +1,5 @@
 <style>
-#confirm-btn {
+.bottom-btn {
     margin-top: 30px;
 }
 
@@ -44,6 +44,7 @@
                 <button class=" btn btn-default " ng-click="addField() "><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Add Field</button>
             </div>
         </div>
-        <button id="confirm-btn" class=" btn btn-primary " ng-click="submitTemplate() "><span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>{{{true: ' Save Changes', false: ' Save Template'}[editPage]}}</button>
+        <button id="cancel-btn" class="bottom-btn btn btn-default" ng-click="cancel()"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
+        <button id="confirm-btn" class="bottom-btn btn btn-primary " ng-click="submitTemplate() "><span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>{{{true: ' Save Changes', false: ' Save Template'}[editPage]}}</button>
     </form>
 </div>

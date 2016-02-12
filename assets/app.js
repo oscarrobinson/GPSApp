@@ -1,7 +1,8 @@
 angular.module('app', [
     'ngRoute',
     'toaster',
-    'ngAnimate'
+    'ngAnimate',
+    'ngFileUpload'
 ])
 
 
@@ -27,6 +28,18 @@ angular.module('app').config(function($routeProvider) {
         controller: 'TemplateCtrl',
         templateUrl: 'Template.html'
     })
+    $routeProvider.when('/projects/:id/create-instance', {
+        controller: 'InstanceCtrl',
+        templateUrl: 'Instance.html'
+    })
+    $routeProvider.when('/projects/:id/object-instances/:instanceId', {
+        controller: 'InstanceCtrl',
+        templateUrl: 'Instance.html'
+    })
+    $routeProvider.when('/projects/:id/create-session', {
+        controller: 'SessionCreateCtrl',
+        templateUrl: 'CreateSession.html'
+    })
 })
 
 //SERVICES
@@ -49,8 +62,26 @@ angular.module('app').service('ProjectsSvc', function($http) {
 })
 
 angular.module('app').service('InstancesSvc', function($http) {
-    this.fetch = function(projectId) {
-        return dummyData
+    this.getInstance = function(id, instanceId) {
+        return $http.get('/api/projects/' + id + '/instances/' + instanceId)
+    }
+    this.addInstance = function(id, type, fields) {
+        return $http.post('/api/projects/' + id + '/instances', {
+            type: type,
+            fields: fields
+        })
+    }
+    this.updateInstance = function(id, instanceId, fields) {
+        return $http.put('/api/projects/' + id + '/instances/' + instanceId, {
+            fields: fields
+        })
+    }
+    this.getCSV = function(id, isUpload) {
+        if (isUpload) {
+            return $http.get('/api/projects/' + id + '/instances/csv-upload')
+        } else {
+            return $http.get('/api/projects/' + id + '/instances/csv')
+        }
     }
 })
 
@@ -69,6 +100,9 @@ angular.module('app').service('TemplatesSvc', function($http) {
     }
     this.getTemplate = function(projectId, templateId) {
         return $http.get('/api/projects/' + projectId + '/templates/' + templateId)
+    }
+    this.getTemplates = function(projectId) {
+        return $http.get('/api/projects/' + projectId + '/templates')
     }
 })
 
@@ -93,7 +127,10 @@ angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParam
     ProjectsSvc.fetchOne($routeParams.id).then(function(res) {
         $scope.project = res.data
         $scope.templates = $scope.project.templates
+        $scope.instances = $scope.project.instances
+        $scope.sessions = []
         $scope.hasTemplates = $scope.templates.length
+        $scope.hasInstances = $scope.instances.length
     }).catch(function(res) {
         toaster.pop({
             type: 'error',
@@ -103,63 +140,35 @@ angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParam
             timeout: 3000
         });
     })
-    $scope.instances = [{
-        easyId: 2314,
-        _id: "897fe8768632487324fe",
-        name: "Oscar",
-        age: "8",
-        health: "Healthy"
-    }, {
-        easyId: 2214,
-        _id: "897fe8768632487324fe",
-        name: "Steve",
-        age: "10",
-        health: "Healthy"
-    }, {
-        easyId: 2314,
-        _id: "897fe8768632487324fe",
-        name: "Oscar",
-        age: "8",
-        health: "Healthy"
-    }, ]
-    $scope.sessions = [{
-            _id: "897fe8768632487324fe",
-            startTime: "12/12/12 23:31"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "10/11/15 19:52"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "12/12/12 23:31"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "10/11/15 19:52"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "12/12/12 23:31"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "10/11/15 19:52"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "12/12/12 23:31"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "10/11/15 19:52"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "12/12/12 23:31"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "10/11/15 19:52"
-        }, {
-            _id: "897fe8768632487324fe",
-            startTime: "12/12/12 23:31"
-        }, ]
-        //filters
+
+    //filters
     $scope.instanceSearch = ""
     $scope.templateSearch = ""
     $scope.sessionSearch = ""
+
+    $scope.downloadCSV = function(arg) {
+        if (arg === "upload") {
+            //we need to return the CSV for uploading a session
+            InstancesSvc.getCSV($routeParams.id, true).then(function(res) {
+                var hiddenElement = document.createElement('a');
+                hiddenElement.href = 'data:attachment/csv,' + encodeURI(res.data);
+                hiddenElement.target = '_blank';
+                hiddenElement.download = $scope.project.name + '-sessionSensorMap.csv';
+                hiddenElement.click();
+            })
+
+        } else {
+            //CSV with all instance data
+            InstancesSvc.getCSV($routeParams.id, false).then(function(res) {
+                var hiddenElement = document.createElement('a');
+                hiddenElement.href = 'data:attachment/csv,' + encodeURI(res.data);
+                hiddenElement.target = '_blank';
+                hiddenElement.download = $scope.project.name + '-allData.csv';
+                hiddenElement.click();
+            })
+        }
+    }
+
     $scope.deleteProject = function() {
         ProjectsSvc.delete($routeParams.id).then(function() {
             $location.path('/');
@@ -226,8 +235,11 @@ angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, 
         lookup: "number",
         description: "Number"
     }, {
-        lookup: "date/time",
-        description: "Date/Time"
+        lookup: "time",
+        description: "Time"
+    }, {
+        lookup: "date",
+        description: "Date"
     }]
     $scope.addField = function() {
         $scope.fields.push({
@@ -287,4 +299,163 @@ angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, 
         })
 
     }
+    $scope.cancel = function() {
+        $location.path('/projects/' + $routeParams.id);
+    }
 })
+
+angular.module('app').controller('InstanceCtrl', function($scope, $routeParams, $location, InstancesSvc, TemplatesSvc, toaster) {
+    $scope.editPage = $routeParams.instanceId ? true : false
+    $scope.createPage = !$scope.editPage
+    $scope.fieldsWithValues = []
+    $scope.fields = []
+    $scope.templateName = ""
+    TemplatesSvc.getTemplates($routeParams.id).then(function(templates) {
+        $scope.templates = templates.data
+        if ($scope.editPage) {
+            InstancesSvc.getInstance($routeParams.id, $routeParams.instanceId).then(function(instance) {
+                for (var i = 0; i < $scope.templates.length; i++) {
+                    if ($scope.templates[i].name === instance.data.type) {
+                        $scope.template = $scope.templates[i]
+                        break
+                    }
+                }
+                $scope.templateName = instance.data.type
+                for (var i = 0; i < $scope.template.fields.length; i++) {
+                    var field = $scope.template.fields[i]
+                    var actualField = {}
+                    actualField["field"] = field.name
+                    actualField["value"] = JSON.parse(instance.data.fields)[field.name.replace(/ /g, "_")]
+                    if (field.type === "time" || field.type == "date") {
+                        actualField["original"] = actualField["value"]
+                    }
+                    console.log(actualField)
+                    $scope.fieldsWithValues.push(actualField)
+                    $scope.fields.push(field)
+
+                }
+                console.log($scope.fieldsWithValues)
+            })
+        }
+    })
+
+    $scope.changeTemplate = function(template) {
+        $scope.fields = template.fields
+        $scope.templateName = template.name
+        for (var i = 0; i < $scope.fields.length; i++) {
+            var field = $scope.fields[i]
+            var actualField = {}
+            actualField["field"] = field.name
+            actualField["value"] = ""
+            $scope.fieldsWithValues.push(actualField)
+        }
+    }
+    $scope.fieldValueChange = function(index) {
+        //nothing to do
+    }
+    $scope.submitInstance = function() {
+        var fields = {}
+        for (var i = 0; i < $scope.fieldsWithValues.length; i++) {
+            fields[$scope.fieldsWithValues[i].field.replace(/ /g, "_")] = $scope.fieldsWithValues[i].value
+        }
+        if ($scope.editPage) {
+            InstancesSvc.updateInstance($routeParams.id, $routeParams.instanceId, fields).then(function(res) {
+                $location.path('/projects/' + $routeParams.id);
+                toaster.pop({
+                    type: 'success',
+                    title: "Instance Changes Saved",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            })
+        } else {
+            InstancesSvc.addInstance($routeParams.id, $scope.templateName, fields).then(function(res) {
+                $location.path('/projects/' + $routeParams.id);
+                toaster.pop({
+                    type: 'success',
+                    title: "Instance Saved",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            }).catch(function(res) {
+                toaster.pop({
+                    type: 'error',
+                    title: "Instance Error",
+                    body: "There was a problem with the values in your instance",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            })
+        }
+    }
+    $scope.cancel = function() {
+        $location.path('/projects/' + $routeParams.id);
+    }
+})
+
+angular.module('app').controller('SessionCreateCtrl', function($scope, $routeParams, $location, Upload, toaster, $timeout) {
+    function fileError(title, msg, errorVal) {
+        toaster.pop({
+            type: 'error',
+            title: title,
+            body: msg,
+            showCloseButton: true,
+            timeout: 5000
+        });
+        $scope[errorVal]++
+            $timeout(function() {
+                $scope[errorVal]--
+            }, 5000)
+    }
+
+    $scope.zipError = 0
+    $scope.csvError = 0
+    $scope.obsError = 0
+    $scope.ephemError = 0
+
+    $scope.submit = function() {
+        var noErrors = true
+        if (!$scope.zipFile) {
+            fileError("Zip File Missing", "You must add a zip file containing your data", "zipError")
+            noErrors = false
+        }
+        if (!$scope.csvFile) {
+            fileError("CSV File Missing", "You must add a CSV file matching data files to instance IDs", "csvError")
+            noErrors = false
+        }
+        if (!$scope.obsFile) {
+            fileError("Obs File Missing", "You must add a base station observation file for your GPS readings", "obsError")
+            noErrors = false
+        }
+        if (!$scope.ephemFile) {
+            fileError("Ephemeris File Missing", "You must add a satellite Ephemeris file for your GPS data", "ephemError")
+            noErrors = false
+        }
+
+        if (noErrors) {
+            Upload.upload({
+                url: '/api/projects/' + $routeParams.id + '/sessions',
+                arrayKey: '',
+                data: {
+                    files: [$scope.zipFile, $scope.csvFile, $scope.obsFile, $scope.ephemFile]
+                },
+            });
+        }
+    }
+})
+
+
+//DIRECTIVES
+angular.module('app').directive('timepicker', function() {
+    return function($scope, $element, attrs) {
+        $element.timepicker();
+    }
+});
+angular.module('app').directive('datepicker', function() {
+    return function($scope, $element, attrs) {
+        $element.datepicker({
+            format: 'dd/mm/yyyy',
+
+        });
+    }
+});

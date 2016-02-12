@@ -24,9 +24,10 @@ h2 {
             <button ng-click="createInstance()" class="btn btn-default create-button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Instance</button>
             <input id="instance-search" ng-model="instanceSearch" type="text" class="form-control" placeholder="Search Instances...">
             <div class='list-group'>
+                <p ng-hide="hasInstances">No Instances in Project</p>
                 <a href="/#/projects/{{ project._id }}/object-instances/{{ instance._id }}" ng-repeat="instance in instances | filter:instanceSearch">
                     <button type="button" class='list-group-item'>
-                        {{ instance.easyId }}
+                        {{ instance.id }}
                         <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>
                     </button>
                 </a>
@@ -48,6 +49,7 @@ h2 {
             <h2>Sessions</h2>
             <button ng-click="createSession()" class="btn btn-default create-button"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Session</button>
             <input id="session-search" ng-model="sessionSearch" type="text" class="form-control" placeholder="Search Sessions...">
+            <p ng-hide="hasSessions">No Sessions in Project</p>
             <div class='list-group' id="session-list">
                 <a href="/#/projects/{{ project._id }}/sessions/{{ session._id }}" ng-repeat="session in sessions | filter:sessionSearch">
                     <button type="button" class='list-group-item'>
@@ -58,5 +60,7 @@ h2 {
             </div>
         </div>
     </div>
-    <button ng-click="deleteProject()" class="btn btn-default"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Project</button>
+    <button ng-click="downloadCSV('upload')" class="btn btn-default"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Get Session Upload CSV</button>
+    <button ng-click="downloadCSV()" class="btn btn-default"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Get Instance Records CSV</button>
+    <button ng-click="deleteProject()" class="btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Project</button>
 </div>

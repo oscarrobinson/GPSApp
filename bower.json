@@ -20,7 +20,10 @@
     "angular": "~1.4.9",
     "angular-mocks": "~1.4.8",
     "angular-route": "~1.4.8",
-    "AngularJS-Toaster": "angularjs-toaster#~1.0.0"
+    "AngularJS-Toaster": "angularjs-toaster#~1.0.0",
+    "bootstrap-timepicker": "^0.5.2",
+    "bootstrap-datepicker": "^1.6.0",
+    "ng-file-upload": "^11.2.3"
   },
   "resolutions": {
     "angular": "~1.4.8"

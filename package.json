@@ -3,8 +3,10 @@
   "dependencies": {
     "angular-ui-bootstrap": "^1.1.1",
     "body-parser": "^1.14.2",
+    "csv": "^0.3.7",
     "express": "^4.13.3",
-    "mongoose": "^4.3.4"
+    "mongoose": "^4.3.4",
+    "multer": "^1.1.0"
   },
   "devDependencies": {
     "chai": "^3.4.1",

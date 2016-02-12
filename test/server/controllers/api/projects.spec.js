@@ -37,7 +37,7 @@ describe('Project Tests', function() {
     it('Add template to project', function(done) {
         api.post('/api/projects/' + projectId + '/templates')
             .send({
-                name: "child",
+                name: "childWrong",
                 fields: [{
                     name: "age",
                     type: "int"
@@ -56,20 +56,70 @@ describe('Project Tests', function() {
     it('Edit the template', function(done) {
         api.put('/api/projects/' + projectId + '/templates/' + templateId)
             .send({
-                name: "childUpdate",
+                name: "child",
                 fields: [{
                     name: "age",
-                    type: "int"
+                    type: "number"
                 }]
             })
             .expect(201)
             .end(function(err, res) {
                 Project.findById(projectId, function(err, project) {
-                    expect(project.templates.id(templateId).name).to.equal("childUpdate")
+                    expect(project.templates.id(templateId).name).to.equal("child")
                     done(err)
                 })
             })
     })
+
+    it('Add a couple of instances', function(done) {
+        api.post('/api/projects/' + projectId + '/instances')
+            .send({
+                type: "child",
+                fields: {
+                    age: 12
+                }
+            })
+            .expect(201)
+            .end(function(err, res) {
+                instanceId = res.body.instances[0]._id
+                Project.findById(projectId, function(err, project) {
+                    expect(project.instances.id(instanceId).type).to.equal("child")
+                    expect(project.instances.id(instanceId).id).to.equal(1)
+                    done(err)
+                })
+            })
+        api.post('/api/projects/' + projectId + '/instances')
+            .send({
+                type: "child",
+                fields: {
+                    age: 14
+                }
+            })
+            .expect(201)
+            .end(function(err, res) {
+                instanceId = res.body.instances[0]._id
+                Project.findById(projectId, function(err, project) {
+                    expect(project.instances.id(instanceId).type).to.equal("child")
+                    expect(project.instances.id(instanceId).id).to.equal(2)
+                    done(err)
+                })
+            })
+    })
+
+    it('Add instance with incorrect template fields', function(done) {
+        api.post('/api/projects/' + projectId + '/instances')
+            .send({
+                type: "child",
+                fields: {
+                    agesdf: 12
+                }
+            })
+            .end(function(err, res) {
+                expect(res.statusCode).to.equal(400)
+                done(err)
+            })
+    })
+
     it('Delete a project', function(done) {
         api.delete('/api/projects/' + projectId)
             .expect(201)

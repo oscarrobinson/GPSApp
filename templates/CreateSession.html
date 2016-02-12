@@ -1,0 +1,46 @@
+<style>
+.download-col {
+    background-color: #ccc;
+    border-width: 1px;
+    border-color: black;
+    padding: 20px;
+    margin: 10px;
+    border-radius: 10px;
+}
+
+.default-col {
+    background-color: #ccc;
+}
+
+.error-col {
+    background-color: #CC7878;
+}
+</style>
+<div class="container">
+    <h1>Create Session</h1>
+    <form name="form">
+        <div class="row">
+            <div id="zip-upload" class="col-md-3 download-col ng-class:zipError ? 'error-col' : 'default-col';">
+                <h3>Session Data Files Zip</h3>
+                <div class="btn btn-default" ngf-select ng-model="zipFile" name="file" ngf-pattern="'.zip'" ngf-accept="'.zip'" ngf-max-size="20MB">Select File </div>
+                <br> {{zipFile.name}}
+            </div>
+            <div id="csv-upload" class="col-md-3 download-col ng-class:csvError ? 'error-col' : 'default-col';">
+                <h3>Instance to Sensor Mapping</h3>
+                <div class="btn btn-default" ngf-select ng-model="csvFile" name="file" ngf-pattern="'.csv'" ngf-accept="'.csv'" ngf-max-size="20MB">Select File</div>
+                <br> {{csvFile.name}}
+            </div>
+            <div id="obs-upload" class="col-md-3 download-col ng-class:obsError ? 'error-col' : 'default-col';">
+                <h3>GPS Base Station Observations</h3>
+                <div class="btn btn-default" ngf-select ng-model="obsFile" name="file" ngf-max-size="20MB">Select File</div>
+                <br> {{obsFile.name}}
+            </div>
+            <div id="ephem-upload" class="col-md-3 download-col ng-class:ephemError ? 'error-col' : 'default-col';">
+                <h3>GPS Ephermeris Observations</h3>
+                <div class="btn btn-default" ngf-select ng-model="ephemFile" name="file" ngf-max-size="20MB">Select File</div>
+                <br> {{ephemFile.name}}
+            </div>
+        </div>
+        <button class="btn btn-default" type="submit" ng-click="submit()">Submit</button>
+    </form>
+</div>
