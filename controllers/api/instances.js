@@ -128,4 +128,20 @@ router.get('/api/projects/:id/instances/:instanceId', function(req, res, next) {
     })
 })
 
+router.delete('/api/projects/:id/instances/:instanceId', function(req,res,next){
+    Project.findOne({
+        _id: req.params.id
+    }, function(err, project) {
+        project.instances.id(req.params.instanceId).remove()
+        project.save(function(err){
+            if (err){
+                res.sendStatus(500)
+            }
+            else{
+                res.sendStatus(201)
+            }
+        })
+    })
+})
+
 module.exports = router

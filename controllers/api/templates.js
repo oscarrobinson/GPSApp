@@ -56,5 +56,34 @@ router.put('/api/projects/:id/templates/:templateId', function(req, res, next) {
     })
 })
 
+router.delete('/api/projects/:id/templates/:templateId', function(req, res, next) {
+    Project.findById(req.params.id, function(err, project) {
+        if (err) {
+            return next(err)
+        }
+        var template = project.templates.id(req.params.templateId);
+        var isUsed = false
+        for(var i=0; i<project.instances.length; i++){
+            var instance = project.instances[i]
+            if(instance.type===template.name){
+                isUsed=true
+                break
+            }
+        }
+        if(!isUsed){
+            template.remove()
+            project.save(function(err, result) {
+                if (err) {
+                    res.sendStatus(500)
+                } else {
+                    res.sendStatus(201)
+                }
+            })
+        }
+        else{
+            res.status(400).send('Cannot Delete a Template that is being used by an Instance')
+        }            
+    })
+})
 
 module.exports = router

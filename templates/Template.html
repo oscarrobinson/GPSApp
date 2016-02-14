@@ -11,6 +11,9 @@
 .remove-field {
     margin-top: 7px;
 }
+#delete-btn{
+    margin-top: 20px;
+}
 </style>
 <div class="container">
     <h1>{{{true: 'Edit Template', false: 'New Template'}[editPage]}}</h1>
@@ -47,4 +50,5 @@
         <button id="cancel-btn" class="bottom-btn btn btn-default" ng-click="cancel()"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
         <button id="confirm-btn" class="bottom-btn btn btn-primary " ng-click="submitTemplate() "><span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>{{{true: ' Save Changes', false: ' Save Template'}[editPage]}}</button>
     </form>
+        <button ng-show="editPage" id="delete-btn" class="btn btn-danger" ng-click="delete()"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Template</button>
 </div>

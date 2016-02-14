@@ -83,6 +83,9 @@ angular.module('app').service('InstancesSvc', function($http) {
             return $http.get('/api/projects/' + id + '/instances/csv')
         }
     }
+    this.delete = function(id, instanceId) {
+        return $http.delete('/api/projects/' + id + '/instances/' + instanceId)
+    }
 })
 
 angular.module('app').service('TemplatesSvc', function($http) {
@@ -103,6 +106,9 @@ angular.module('app').service('TemplatesSvc', function($http) {
     }
     this.getTemplates = function(projectId) {
         return $http.get('/api/projects/' + projectId + '/templates')
+    }
+     this.delete = function(id, templateId) {
+        return $http.delete('/api/projects/' + id + '/templates/' + templateId)
     }
 })
 
@@ -264,7 +270,6 @@ angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, 
         TemplatesSvc.getTemplate($routeParams.id, $routeParams.templateId).then(function(template) {
             $scope.fields = template.data.fields
             $scope.templateName = template.data.name
-            console.log($scope.fields)
         })
     } else {
         $scope.fields = [{
@@ -302,6 +307,26 @@ angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, 
     $scope.cancel = function() {
         $location.path('/projects/' + $routeParams.id);
     }
+
+    $scope.delete = function(){
+        TemplatesSvc.delete($routeParams.id, $routeParams.templateId).then(function(res) {
+            $location.path('/projects/' + $routeParams.id)
+            toaster.pop({
+                type: 'success',
+                title: "Template Deleted",
+                showCloseButton: true,
+                timeout: 3000
+            });
+        }).catch(function(res) {
+            toaster.pop({
+                type: 'error',
+                title: "Error",
+                body: res.data,
+                showCloseButton: true,
+                timeout: 3000
+            });
+        })
+    }
 })
 
 angular.module('app').controller('InstanceCtrl', function($scope, $routeParams, $location, InstancesSvc, TemplatesSvc, toaster) {
@@ -328,13 +353,12 @@ angular.module('app').controller('InstanceCtrl', function($scope, $routeParams, 
                     actualField["value"] = JSON.parse(instance.data.fields)[field.name.replace(/ /g, "_")]
                     if (field.type === "time" || field.type == "date") {
                         actualField["original"] = actualField["value"]
+
                     }
-                    console.log(actualField)
                     $scope.fieldsWithValues.push(actualField)
                     $scope.fields.push(field)
 
                 }
-                console.log($scope.fieldsWithValues)
             })
         }
     })
@@ -350,6 +374,27 @@ angular.module('app').controller('InstanceCtrl', function($scope, $routeParams, 
             $scope.fieldsWithValues.push(actualField)
         }
     }
+
+    $scope.delete = function() {
+        InstancesSvc.delete($routeParams.id, $routeParams.instanceId).then(function(res) {
+            $location.path('/projects/' + $routeParams.id)
+            toaster.pop({
+                type: 'success',
+                title: "Instance Deleted",
+                showCloseButton: true,
+                timeout: 3000
+            });
+        }).catch(function(res) {
+            toaster.pop({
+                type: 'error',
+                title: "Error",
+                body: "Couldn't delete instance, instance not found",
+                showCloseButton: true,
+                timeout: 3000
+            });
+        })
+    }
+
     $scope.fieldValueChange = function(index) {
         //nothing to do
     }

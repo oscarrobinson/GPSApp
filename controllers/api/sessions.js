@@ -13,7 +13,9 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
     var obsFile = req.files[2]
     var ephemFile = req.files[3]
     //return error 400 if files wrong
-    
+    //validate what can be done with data here
+    //create session and create process options for session
+    //may have more than one sensor file per instance
 
 })
 

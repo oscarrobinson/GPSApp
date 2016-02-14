@@ -1,3 +1,8 @@
+<style>
+#delete-btn{
+    margin-top: 20px;
+}
+</style>
 <div class="container">
     <h1>{{{true: 'Edit Instance', false: 'New Instance'}[editPage]}}</h1>
     <form class="form-horizontal">
@@ -33,4 +38,6 @@
         <button id="cancel-btn" class=" btn btn-default " ng-click="cancel() "><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
         <button id="confirm-btn" class=" btn btn-primary " ng-click="submitInstance() "><span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span>{{{true: ' Save Changes', false: ' Save Instance'}[editPage]}}</button>
     </form>
+    <br>
+    <button ng-show="editPage" id="delete-btn" class="btn btn-danger" ng-click="delete()"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Instance</button>
 </div>
