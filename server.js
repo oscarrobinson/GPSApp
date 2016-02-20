@@ -1,4 +1,4 @@
-PROJECT_ROOT = __dirname
+PROJECT_ROOT = (__dirname+'/')
 
 var express = require('express')
 

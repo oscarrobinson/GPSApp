@@ -478,6 +478,7 @@ angular.module('app').controller('SessionCreateCtrl', function($scope, $routePar
         }
 
         if (noErrors) {
+            //TODO: Add feedback to show server is validating files, if success, redirect to session page, else show helpful error
             Upload.upload({
                 url: '/api/projects/' + $routeParams.id + '/sessions',
                 arrayKey: '',
