@@ -4,7 +4,6 @@ var router = require('express').Router()
 var multer = require('multer')
 var fs = require('fs')
 var parse = require('csv-parse')
-var UbxFile = require('../parsers/ublox')
 var ObsFile = require('../parsers/gpshelpers/obs')
 var NavFile = require('../parsers/gpshelpers/nav')
 var _ = require('underscore')
@@ -13,6 +12,21 @@ var upload = multer({
     dest: 'uploads/'
 })
 var unzip = require('unzip2')
+
+
+
+function parseFile(filePath) {
+    var file = undefined
+    var fileSplit = filePath.split('.')
+    var fileType = fileSplit[fileSplit.length - 1]
+    for (var i = 0; i < PARSERS.length; i++) {
+        if (PARSERS[i] == fileType) {
+            var Parser = require('../parsers/' + fileType)
+            var file = new Parser(filePath)
+        }
+    }
+    return file
+}
 
 router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req, res, next) {
 
@@ -48,15 +62,13 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
                 for (var i = 0; i < files.length; i++) {
                     var filePath = PROJECT_ROOT + zipFile.path + 'extract/' + files[i]
                     var fileSplit = files[i].split('.')
-                    var fileType = fileSplit[fileSplit.length - 1]
-                    if (fileType == "ubx") {
-                        var ubxFile = new UbxFile(filePath)
-                        var fStart = ubxFile.startTime
-                        dataStartTime = fStart < dataStartTime ? fStart : dataStartTime
-                        var fEnd = ubxFile.endTime
-                        dataEndTime = fEnd > dataEndTime ? fEnd : dataEndTime
-                        sensorIds.push(fileSplit[0])
-                    }
+                    var file = parseFile(filePath)
+                    var fStart = file.startTime
+                    dataStartTime = fStart < dataStartTime ? fStart : dataStartTime
+                    var fEnd = file.endTime
+                    dataEndTime = fEnd > dataEndTime ? fEnd : dataEndTime
+                    sensorIds.push(fileSplit[0])
+
                     //future file types go here in else if blocks
                 }
 
@@ -123,10 +135,7 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
                                         if (err) {
                                             return res.sendStatus(500)
                                         } else {
-                                            setTimeout(function() {
-                                                return res.status(201).json(result)
-                                            }, 5000)
-
+                                            return res.status(201).json(result)
                                         }
                                     })
                                 })

@@ -1,5 +1,9 @@
 PROJECT_ROOT = (__dirname + '/')
 
+PARSERS = [
+    "ubx"
+]
+
 var express = require('express')
 
 var app = express()
