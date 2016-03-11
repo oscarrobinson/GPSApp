@@ -59,6 +59,10 @@ var Instance = new db.Schema({
 })
 
 var Project = new db.Schema({
+    user: {
+        type: db.Schema.Types.ObjectId,
+        required: true
+    },
     name: {
         type: String,
         required: true

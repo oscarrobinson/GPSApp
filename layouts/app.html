@@ -29,14 +29,17 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav navbar-right">
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">User Name<span class="caret"></span></a>
+                    <li class="dropdown" ng-if="user">
+                        <a href="" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ user.username }}<span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a href="#">Account Settings</a></li>
+                            <li><a href="#/settings">Account Settings</a></li>
                             <li role="separator" class="divider"></li>
-                            <li><a href="#">Log Out</a></li>
+                            <li><a href="#/logout">Log Out</a></li>
                         </ul>
                     </li>
+                    <a ng-hide="user" href="/#/login">Log In</a>
+                    <br>
+                    <a ng-hide="user" href="/#/register">Register</a>
                 </ul>
             </div>
             <!-- /.navbar-collapse -->

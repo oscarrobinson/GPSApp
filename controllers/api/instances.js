@@ -7,6 +7,9 @@ router.post('/api/projects/:id/instances', function(req, res, next) {
         if (err) {
             return next(err)
         }
+        if (project.user != req.auth.id) {
+            return res.sendStatus(401)
+        }
         var max = 0;
         var templates = project.templates.toObject()
         var template
@@ -19,10 +22,12 @@ router.post('/api/projects/:id/instances', function(req, res, next) {
         }
         var check = ""
         if (template) {
+            console.log(req.body.fields)
             for (var i = 0; i < template.fields.length; i++) {
-                var field = template.fields[i]
+                var fieldName = template.fields[i].name.replace(/ /g, '_')
                     //just check we filled all fields
-                check = req.body.fields[field.name]
+                console.log(fieldName)
+                check = req.body.fields[fieldName]
                 if (check === "") {
                     check = "OK"
                 }
@@ -67,6 +72,9 @@ router.put('/api/projects/:id/instances/:instanceId', function(req, res, next) {
         if (err) {
             return next(err)
         }
+        if (project.user != req.auth.id) {
+            return res.sendStatus(401)
+        }
         var instance = project.instances.id(req.params.instanceId);
         instance.fields = req.body.fields
         project.save(function(err, result) {
@@ -83,6 +91,9 @@ router.get('/api/projects/:id/instances/csv', function(req, res, next) {
     Project.findOne({
         _id: req.params.id
     }, function(err, project) {
+        if (project.user != req.auth.id) {
+            return res.sendStatus(401)
+        }
         var instances = project.instances.toObject()
         var headers = ['id'].concat(Object.keys(JSON.parse(instances[0].fields)))
         console.log(headers)
@@ -105,7 +116,9 @@ router.get('/api/projects/:id/instances/csv-upload', function(req, res, next) {
     Project.findOne({
         _id: req.params.id
     }, function(err, project) {
-
+        if (project.user != req.auth.id) {
+            return res.sendStatus(401)
+        }
         var instances = project.instances.toObject()
         var headers = ['instance_id', 'sensor_id']
         console.log(headers)
@@ -123,21 +136,26 @@ router.get('/api/projects/:id/instances/:instanceId', function(req, res, next) {
     Project.findOne({
         _id: req.params.id
     }, function(err, project) {
+        if (project.user != req.auth.id) {
+            return res.sendStatus(401)
+        }
         var instance = project.instances.id(req.params.instanceId)
         res.status(200).json(instance)
     })
 })
 
-router.delete('/api/projects/:id/instances/:instanceId', function(req,res,next){
+router.delete('/api/projects/:id/instances/:instanceId', function(req, res, next) {
     Project.findOne({
         _id: req.params.id
     }, function(err, project) {
+        if (project.user != req.auth.id) {
+            return res.sendStatus(401)
+        }
         project.instances.id(req.params.instanceId).remove()
-        project.save(function(err){
-            if (err){
+        project.save(function(err) {
+            if (err) {
                 res.sendStatus(500)
-            }
-            else{
+            } else {
                 res.sendStatus(201)
             }
         })

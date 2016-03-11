@@ -7,39 +7,97 @@ angular.module('app', [
 
 
 //ROUTES
+
+var onlyLoggedIn = function($location, $q, $window) {
+    var deferred = $q.defer();
+    if ($window.localStorage.token) {
+        deferred.resolve();
+    } else {
+        deferred.reject();
+        $location.url('/login?then=' + $location.path().substring(1));
+    }
+    return deferred.promise;
+};
+
 angular.module('app').config(function($routeProvider) {
     $routeProvider.when('/', {
         controller: 'LoggedInHomeCtrl',
-        templateUrl: 'LoggedInHome.html'
+        templateUrl: 'LoggedInHome.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/newproject', {
         controller: 'NewProjectCtrl',
-        templateUrl: 'NewProject.html'
+        templateUrl: 'NewProject.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/projects/:id', {
         controller: 'ProjectPageCtrl',
-        templateUrl: 'Project.html'
+        templateUrl: 'Project.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/projects/:id/create-template', {
         controller: 'TemplateCtrl',
-        templateUrl: 'Template.html'
+        templateUrl: 'Template.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/projects/:id/object-templates/:templateId', {
         controller: 'TemplateCtrl',
-        templateUrl: 'Template.html'
+        templateUrl: 'Template.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/projects/:id/create-instance', {
         controller: 'InstanceCtrl',
-        templateUrl: 'Instance.html'
+        templateUrl: 'Instance.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/projects/:id/object-instances/:instanceId', {
         controller: 'InstanceCtrl',
-        templateUrl: 'Instance.html'
+        templateUrl: 'Instance.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
     $routeProvider.when('/projects/:id/create-session', {
         controller: 'SessionCreateCtrl',
-        templateUrl: 'CreateSession.html'
+        templateUrl: 'CreateSession.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
     })
+    $routeProvider.when('/projects/:id/sessions/:sessionId', {
+        controller: 'SessionCtrl',
+        templateUrl: 'Session.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
+    })
+    $routeProvider.when('/login', {
+        controller: 'LoginCtrl',
+        templateUrl: 'Login.html'
+    })
+    $routeProvider.when('/register', {
+        controller: 'RegisterCtrl',
+        templateUrl: 'Register.html'
+    })
+    $routeProvider.when('/logout', {
+        controller: 'LogoutCtrl',
+        templateUrl: 'Logout.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
+    });
 })
 
 //SERVICES
@@ -107,11 +165,73 @@ angular.module('app').service('TemplatesSvc', function($http) {
     this.getTemplates = function(projectId) {
         return $http.get('/api/projects/' + projectId + '/templates')
     }
-     this.delete = function(id, templateId) {
+    this.delete = function(id, templateId) {
         return $http.delete('/api/projects/' + id + '/templates/' + templateId)
     }
 })
 
+angular.module('app').service('SessionSvc', function($http) {
+    this.getProjectSessions = function(id) {
+        return $http.get('/api/projects/' + id + '/sessions')
+    }
+})
+
+angular.module('app').service('UserSvc', function($http, $window) {
+    var svc = this
+    this.getUser = function() {
+        return $http.get('/api/users')
+    }
+
+    this.login = function(email, password) {
+        //after login called on service, all future requests contain the X-Auth header
+        return $http.post('/api/login', {
+            email: email,
+            password: password
+        }).then(function(val) {
+            svc.token = val.data
+            $window.localStorage.token = svc.token;
+            svc.getUser().then(function(res) {
+                $window.localStorage.user = JSON.stringify(res.data)
+                return svc.getUser()
+            })
+        })
+    }
+    this.register = function(email, username, password) {
+        return $http.post('/api/users', {
+            email: email,
+            password: password,
+            username: username
+        })
+    }
+})
+
+
+
+angular.module('app').factory('auth', function($rootScope, $q, $window) {
+    return {
+        //add our header to every request
+        request: function(config) {
+            config.headers = config.headers || {};
+            if ($window.localStorage.token) {
+                if ($window.localStorage.user) {
+                    $rootScope.user = JSON.parse($window.localStorage.user)
+                }
+                config.headers['X-Auth'] = $window.localStorage.token
+            }
+            return config
+        },
+        response: function(response) {
+            if (response.status === 401) {
+                // handle the case where the user is not authenticated
+            }
+            return response || $q.when(response);
+        }
+    };
+});
+
+angular.module('app').config(function($httpProvider) {
+    $httpProvider.interceptors.push('auth');
+});
 
 //CONTROLLERS
 angular.module('app').controller('LoggedInHomeCtrl', function($scope, ProjectsSvc, toaster) {
@@ -129,14 +249,17 @@ angular.module('app').controller('LoggedInHomeCtrl', function($scope, ProjectsSv
     })
 })
 
-angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParams, $location, ProjectsSvc, InstancesSvc, toaster) {
+angular.module('app').controller('ProjectPageCtrl', function($scope, $routeParams, $location, ProjectsSvc, InstancesSvc, SessionSvc, toaster) {
     ProjectsSvc.fetchOne($routeParams.id).then(function(res) {
         $scope.project = res.data
         $scope.templates = $scope.project.templates
         $scope.instances = $scope.project.instances
-        $scope.sessions = []
         $scope.hasTemplates = $scope.templates.length
         $scope.hasInstances = $scope.instances.length
+        SessionSvc.getProjectSessions($routeParams.id).then(function(res) {
+            $scope.sessions = res.data
+            $scope.hasSessions = $scope.sessions.length
+        })
     }).catch(function(res) {
         toaster.pop({
             type: 'error',
@@ -294,13 +417,23 @@ angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, 
                 timeout: 3000
             });
         }).catch(function(res) {
-            toaster.pop({
-                type: 'error',
-                title: "Template Error",
-                body: "You must give your template and all fields a name",
-                showCloseButton: true,
-                timeout: 3000
-            });
+            if (res.data == "Not Unique") {
+                toaster.pop({
+                    type: 'error',
+                    title: "Template Error",
+                    body: "Template fields must have unique names",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            } else {
+                toaster.pop({
+                    type: 'error',
+                    title: "Template Error",
+                    body: "You must give your template and all fields a name",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            }
         })
 
     }
@@ -308,7 +441,7 @@ angular.module('app').controller('TemplateCtrl', function($scope, $routeParams, 
         $location.path('/projects/' + $routeParams.id);
     }
 
-    $scope.delete = function(){
+    $scope.delete = function() {
         TemplatesSvc.delete($routeParams.id, $routeParams.templateId).then(function(res) {
             $location.path('/projects/' + $routeParams.id)
             toaster.pop({
@@ -479,15 +612,125 @@ angular.module('app').controller('SessionCreateCtrl', function($scope, $routePar
 
         if (noErrors) {
             //TODO: Add feedback to show server is validating files, if success, redirect to session page, else show helpful error
+            $scope.loading = true
+            $scope.progressText = "Uploading"
+            $scope.progressAmount = "1"
             Upload.upload({
                 url: '/api/projects/' + $routeParams.id + '/sessions',
                 arrayKey: '',
                 data: {
                     files: [$scope.zipFile, $scope.csvFile, $scope.obsFile, $scope.ephemFile]
-                },
+                }
+            }).then(function(res) {
+                $scope.progressAmount = 100
+                $scope.progressAmount = "Done!"
+                $location.path('/projects/' + $routeParams.id + '/sessions/' + res.data._id)
+                toaster.pop({
+                    type: 'success',
+                    title: "Session Created",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            }, function(err) {
+                if (err.data == "OBS Range") {
+                    fileError("Obs File Error", "OBS file does not cover data time range", "obsError")
+                }
+                if (err.data == "NAV Range") {
+                    fileError("Ephemeris File Error", "Ephermeris file does not cover data time range", "ephemError")
+
+                }
+                if (err.data == "Missing Data") {
+                    fileError("Data Error", "A data file specified in the CSV was not found in the Zip File", "zipError")
+                }
+                if (err.data == "No Instance") {
+                    fileError("Data Error", "An instance in your CSV file could not be found in this project", "csvError")
+                }
+            }, function(uploadEvent) {
+                if (uploadEvent.loaded < uploadEvent.total) {
+                    $scope.progressAmount = Math.floor(100 * (uploadEvent.loaded / uploadEvent.total) * (7 / 10))
+                    $scope.progressText = "Uploading " + $scope.progressAmount + "%"
+                } else {
+                    $scope.progressAmount = 70
+                    $scope.progressText = "Validating Files"
+                }
+            })
+        }
+    }
+})
+
+angular.module('app').controller('SessionCtrl', function($scope, $routeParams, $location, toaster, $timeout) {
+
+})
+
+angular.module('app').controller('LoginCtrl', function($routeParams, $rootScope, $scope, $location, UserSvc, toaster) {
+    $scope.login = function() {
+        UserSvc.login($scope.email, $scope.password).then(function(res) {
+            if ($routeParams.then) {
+                $location.url('/' + $routeParams.then)
+            } else {
+                $location.path('/')
+            }
+            $location.search('then', null)
+            toaster.pop({
+                type: 'success',
+                title: "Logged In",
+                showCloseButton: true,
+                timeout: 3000
+            });
+        }).catch(function(res) {
+            toaster.pop({
+                type: 'error',
+                title: "Error",
+                body: "Your email or password was incorrect",
+                showCloseButton: true,
+                timeout: 3000
+            });
+        })
+    }
+})
+
+angular.module('app').controller('RegisterCtrl', function($scope, $location, UserSvc, toaster) {
+    $scope.register = function() {
+        if ($scope.password == $scope.passwordConfirm) {
+            UserSvc.register($scope.email, $scope.username, $scope.password).then(function(res) {
+                $location.path('/');
+                toaster.pop({
+                    type: 'success',
+                    title: "Account Created",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            }).catch(function(res) {
+                toaster.pop({
+                    type: 'error',
+                    title: "Error",
+                    body: res.data,
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+            })
+        } else {
+            toaster.pop({
+                type: 'error',
+                title: "Error",
+                body: "Your passwords don't match",
+                showCloseButton: true,
+                timeout: 3000
             });
         }
     }
+})
+
+angular.module('app').controller('LogoutCtrl', function($scope, $location, toaster, $window, $rootScope) {
+    $window.localStorage.clear()
+    $rootScope.user = undefined
+    toaster.pop({
+        type: 'success',
+        title: "Logged Out",
+        showCloseButton: true,
+        timeout: 3000
+    });
+    $location.path('/login')
 })
 
 

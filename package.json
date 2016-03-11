@@ -2,15 +2,20 @@
   "name": "gpsapp",
   "dependencies": {
     "angular-ui-bootstrap": "^1.1.1",
+    "bcrypt": "^0.8.5",
     "body-parser": "^1.14.2",
     "csv": "^0.3.7",
+    "csv-parse": "^1.0.2",
     "express": "^4.13.3",
+    "jwt-simple": "^0.4.1",
     "mongoose": "^4.3.4",
     "multer": "^1.1.0",
+    "underscore": "^1.8.3",
     "unzip2": "^0.2.5"
   },
   "devDependencies": {
     "chai": "^3.4.1",
+    "jsonwebtoken": "^5.7.0",
     "karma": "^0.13.19",
     "karma-chai": "^0.1.0",
     "karma-mocha": "^0.2.1",
@@ -21,6 +26,6 @@
     "supertest": "^1.1.0"
   },
   "scripts": {
-    "test": "echo _______BACKEND TEST_______;mocha;echo _______FRONTEND TEST_______; karma start --single-run "
+    "test": "echo _______BACKEND TEST_______;mocha;"
   }
 }
