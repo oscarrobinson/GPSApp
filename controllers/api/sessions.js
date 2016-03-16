@@ -15,17 +15,20 @@ var unzip = require('unzip2')
 
 
 
-function parseFile(filePath) {
-    var file = undefined
-    var fileSplit = filePath.split('.')
-    var fileType = fileSplit[fileSplit.length - 1]
-    for (var i = 0; i < PARSERS.length; i++) {
-        if (PARSERS[i] == fileType) {
-            var Parser = require('../parsers/' + fileType)
-            var file = new Parser(filePath)
+function parseFiles(filepaths) {
+    var promises = []
+    for (var j = 0; j < filepaths.length; j++) {
+        var filePath = filepaths[j]
+        var fileSplit = filePath.split('.')
+        var fileType = fileSplit[fileSplit.length - 1]
+        for (var i = 0; i < PARSERS.length; i++) {
+            if (PARSERS[i] == fileType) {
+                var Parser = require('../parsers/' + fileType)
+                promises.push(Parser(filePath))
+            }
         }
     }
-    return file
+    return Promise.all(promises)
 }
 
 router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req, res, next) {
@@ -59,102 +62,113 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
                 var dataEndTime = 0
                     //for each filetype, must populate this with sensor ids we have data for
                 var sensorIds = []
-                for (var i = 0; i < files.length; i++) {
-                    var filePath = PROJECT_ROOT + zipFile.path + 'extract/' + files[i]
-                    var fileSplit = files[i].split('.')
-                    var file = parseFile(filePath)
-                    var fStart = file.startTime
-                    dataStartTime = fStart < dataStartTime ? fStart : dataStartTime
-                    var fEnd = file.endTime
-                    dataEndTime = fEnd > dataEndTime ? fEnd : dataEndTime
-                    sensorIds.push(fileSplit[0])
 
-                    //future file types go here in else if blocks
+                var filepaths = []
+                for (var i = 0; i < files.length; i++) {
+                    filepaths.push(PROJECT_ROOT + zipFile.path + 'extract/' + files[i])
                 }
 
-                var obsObj = new ObsFile(PROJECT_ROOT + obsFile.path, function(file) {
-                    var obsStartTime = file.startTime
-                    var obsEndTime = file.endTime
+                parseFiles(filepaths).then(function(files) {
+                    console.log(files)
+                    for (var i = 0; i < files.length; i++) {
+                        var file = files[i]
+                        var arr = file.name.split('.')
+                        var nameNoExtension = arr[0]
+                        dataStartTime = file.startTime < dataStartTime ? file.startTime : dataStartTime
+                        dataEndTime = file.endTime > dataEndTime ? file.endTime : dataEndTime
+                        sensorIds.push(nameNoExtension)
+                    }
 
-                    var navObj = new NavFile(PROJECT_ROOT + ephemFile.path, function(file) {
-                        var navStartTime = file.startTime
-                        var navEndTime = file.endTime
-                        var obsOkay = dataEndTime <= obsEndTime && dataStartTime >= obsStartTime
-                        var navOkay = dataEndTime <= navEndTime && dataStartTime >= navStartTime
-                        if (obsOkay && navOkay) {
-                            var haveAllFiles = true
-                            var parser = parse({ delimiter: ',' }, function(err, data) {
-                                var sensorIdsExpected = []
-                                var instancesExpected = []
-                                for (var i = 1; i < data.length; i++) {
-                                    instancesExpected.push(data[i][0])
-                                    var ids = data[i][1].split(';')
-                                    for (var z = 0; z < ids.length; ids++) {
-                                        sensorIdsExpected.push(ids[z])
-                                    }
-                                }
-                                if (!_.isEqual(sensorIdsExpected, sensorIds)) {
-                                    return res.status(400).send("Missing Data")
-                                }
+                    var obsObj = new ObsFile(PROJECT_ROOT + obsFile.path, function(file) {
+                        var obsStartTime = file.startTime
+                        var obsEndTime = file.endTime
 
-                                //check auth and check project has all instances we wanna save data for
-                                Project.findOne({
-                                    _id: req.params.id
-                                }, function(err, project) {
-                                    if (err) {
-                                        return res.sendStatus(400)
-                                    }
-                                    if (project.user != req.auth.id) {
-                                        return res.sendStatus(401)
-                                    }
-
-                                    for (var i = 0; i < project.instances.length; i++) {
-                                        if (!_.contains(instancesExpected, project.instances[i].id.toString())) {
-                                            return res.status(400).send("No Instance")
+                        var navObj = new NavFile(PROJECT_ROOT + ephemFile.path, function(file) {
+                            var navStartTime = file.startTime
+                            var navEndTime = file.endTime
+                            var obsOkay = dataEndTime <= obsEndTime && dataStartTime >= obsStartTime
+                            var navOkay = dataEndTime <= navEndTime && dataStartTime >= navStartTime
+                            if (obsOkay && navOkay) {
+                                var haveAllFiles = true
+                                var parser = parse({ delimiter: ',' }, function(err, data) {
+                                    var sensorIdsExpected = []
+                                    var instancesExpected = []
+                                    for (var i = 1; i < data.length; i++) {
+                                        instancesExpected.push(data[i][0])
+                                        var ids = data[i][1].split(';')
+                                        for (var z = 0; z < ids.length; ids++) {
+                                            sensorIdsExpected.push(ids[z])
                                         }
                                     }
+                                    if (!_.isEqual(sensorIdsExpected, sensorIds)) {
+                                        return res.status(400).send("Missing Data")
+                                    }
 
-
-                                    //TODO: store ephemeris and observation files for session in GridFS
-                                    //TODO: delete ephm and obs raw files
-                                    //TODO: Store raw data files in DB
-                                    //TODO: create session 
-                                    //TODO: Store raw data in DB for each instance file
-                                    //          for this only type we need is nmeaLatLong
-                                    //TODO: Get available datatypes and add process options to session
-                                    //TODO: Delete temp CSV file
-                                    //TODO: Delete  temp raw dat a files
-
-
-                                    var session = new Session({
-                                        project: req.params.id,
-                                        startTime: dataStartTime,
-                                        endTime: dataEndTime
-                                    })
-                                    session.save(function(err, result) {
+                                    //check auth and check project has all instances we wanna save data for
+                                    Project.findOne({
+                                        _id: req.params.id
+                                    }, function(err, project) {
                                         if (err) {
-                                            return res.sendStatus(500)
-                                        } else {
-                                            return res.status(201).json(result)
+                                            return res.sendStatus(400)
                                         }
+                                        if (project.user != req.auth.id) {
+                                            return res.sendStatus(401)
+                                        }
+
+                                        for (var i = 0; i < project.instances.length; i++) {
+                                            if (!_.contains(instancesExpected, project.instances[i].id.toString())) {
+                                                return res.status(400).send("No Instance")
+                                            }
+                                        }
+
+
+                                        //TODO: store ephemeris and observation files for session in GridFS
+                                        //TODO: delete ephm and obs raw files
+                                        //TODO: Store raw data files in DB
+                                        //TODO: create session 
+                                        //TODO: Store raw data in DB for each instance file
+                                        //          for this only type we need is nmeaLatLong
+                                        //TODO: Get available datatypes and add process options to session
+                                        //TODO: Delete temp CSV file
+                                        //TODO: Delete  temp raw dat a files
+
+
+                                        var session = new Session({
+                                            project: req.params.id,
+                                            startTime: dataStartTime,
+                                            endTime: dataEndTime
+                                        })
+                                        session.save(function(err, result) {
+                                            if (err) {
+                                                return res.sendStatus(500)
+                                            } else {
+                                                console.log("ALL FINE")
+                                                return res.sendStatus(500)
+                                                    //return res.status(201).json(result)
+                                            }
+                                        })
                                     })
-                                })
 
 
-                            });
-                            fs.createReadStream(PROJECT_ROOT + csvFile.path).pipe(parser);
-                        } else if (!obsOkay) {
-                            return res.status(400).send("OBS Range")
-                        } else if (!navOkay) {
-                            return res.status(400).send("NAV Range")
+                                });
+                                fs.createReadStream(PROJECT_ROOT + csvFile.path).pipe(parser);
+                            } else if (!obsOkay) {
+                                return res.status(400).send("OBS Range")
+                            } else if (!navOkay) {
+                                return res.status(400).send("NAV Range")
 
-                        }
+                            }
+                        })
+
                     })
-
+                }).catch(function(err) {
+                    console.log(err)
                 })
 
+
+
             })
-        }));
+        }))
 
 
     } else {

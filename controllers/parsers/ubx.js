@@ -1,11 +1,18 @@
 var fs = require('fs')
 var _ = require('underscore')
+var readline = require('readline')
+var Datatype = require("../../models/datatype")
 
-function getTimeFromNmeaBuf(buf) {
-    var timeStr = _.map(buf, function(i) {
-        return String.fromCharCode(i)
-    }).join("")
-    var timeArr = timeStr.split(',')
+function getTimeFromNmea(line) {
+    var corruptArr = line.split(',')
+    var timeArr = []
+    var foundFirst = false
+    for (var i = 0; i < corruptArr.length; i++) {
+        if (corruptArr[i].includes("RMC")) {
+            foundFirst = true
+        }
+        timeArr.push(corruptArr[i])
+    }
     var time = timeArr[1]
     var date = timeArr[9]
     var year = parseInt(date[4] + date[5]) + 2000
@@ -18,72 +25,133 @@ function getTimeFromNmeaBuf(buf) {
 }
 
 var UbxFile = function(file) {
-    var data = fs.readFileSync(file)
-    var buf = [];
-    //scan down file until get a start time
-    for (var i = 0; i < data.length; i++) {
-        //if have a $,is NMEA message so start filling buffer
-        if (data[i] == 36) {
-            //read ahead and see if we have a time in this message
-            var x = i
-            for (i = i; i < (x + 6); i++) {
-                buf.push(data[i]);
-            }
-            //doesn't matter what 3rd char is as just denotes GNSS system type received
-            buf[2] = 0
-                //$GPRMC - almost guaranteed to exist as is minimum NMEA info so see if we have one
-            if (_.isEqual(buf, [36, 71, 0, 82, 77, 67])) {
-                //we got the first time message, read the rest
 
-                while (data[i] != 36) {
-                    buf.push(data[i])
-                    i++
-                }
-                this.startTime = getTimeFromNmeaBuf(buf)
-                break
-            } else {
-                //didnt get an NMEA time message, empty buf and keep scanning
-                buf = []
-            }
-        }
-    }
-    //scan up file until get an end time
-    buf = [];
-    var skipDollar = false;
-    for (var i = data.length - 1; i > 0; i--) {
-        //if have a $,is NMEA message so start filling buffer
-        if (data[i] == 36 && !skipDollar) {
-            //read ahead and see if we have a time in this message
-            var x = i
-            for (i = i; i < (x + 6); i++) {
-                buf.push(data[i]);
-            }
-            //doesn't matter what 3rd char is as just denotes GNSS system type received
-            buf[2] = 0
-                //$GPRMC - almost guaranteed to exist as is minimum NMEA info so see if we have one
-            if (_.isEqual(buf, [36, 71, 0, 82, 77, 67])) {
-                //we got the first time message, read the rest
 
-                while (data[i] != 36) {
-                    buf.push(data[i])
-                    i++
-                }
-                this.endTime = getTimeFromNmeaBuf(buf)
-                break
-            } else {
-                //didnt get an NMEA time message, empty buf and keep scanning
-                skipDollar = true
-                buf = []
-            }
-        } else if (data[i] == 36 && skipDollar) {
-            if (skipDollar) {
-                skipDollar = false
-            }
-        }
-        buf = []
+
+    //register datatypes looking to mark
+    var dt_mark = ["RXM-RAWX", "Latitude", "Longitude"];
+    //register datatypes looking to record
+    var dt_record = ["Latitude", "Longitude"]
+
+
+    var has_datatypes = {}
+    for (var i = 0; i < dt_mark.length; i++) {
+        has_datatypes[dt_mark[i]] = false
     }
 
+    var data_temp = {}
+    for (var i = 0; i < dt_record.length; i++) {
+        data_temp[dt_record[i]] = []
+    }
+
+
+    var promise = new Promise(function(resolve, reject) {
+        var lastTime = ""
+
+
+        var startTime = 0
+        var endTime = 0
+        var arr = file.split('/')
+        var name = arr[arr.length - 1]
+        var datatypes = []
+        var data = {}
+
+
+
+        const rl = readline.createInterface({
+            input: fs.createReadStream(file)
+        });
+
+
+
+        rl.on('line', function(line) {
+            //READ BY LINE AND EXTRACT EVERYTHING WE NEED
+            //add all datatypes found in file to datatypes list by their id
+            //add any data that will be stored independent of file
+
+            if (line.includes("RMC")) {
+                if (!startTime) {
+                    startTime = getTimeFromNmea(line)
+                }
+                lastTime = line
+            }
+
+            //extract lat longs from NMEA if have
+            if (line.includes("GLL")) {
+                has_datatypes["Longitude"] = true
+                has_datatypes["Latitude"] = true
+                var linesplit = line.split(',')
+                var lat_mins = linesplit[1]
+                var lon_mins = linesplit[3]
+                var longitude = parseInt(lon_mins.substr(0, 2))
+                longitude += parseFloat(lon_mins.substr(2, 8)) / 60
+                var latitude = parseInt(lat_mins.substr(0, 2))
+                latitude += parseFloat(lat_mins.substr(2, 8)) / 60
+                if (linesplit[2] == 'S') {
+                    latitude = -latitude
+                }
+                if (linesplit[4] == 'W') {
+                    longitude = -longitude
+                }
+                data_temp["Longitude"].push({
+                    timestamp: getTimeFromNmea(lastTime),
+                    data: longitude
+                })
+                data_temp["Latitude"].push({
+                    timestamp: getTimeFromNmea(lastTime),
+                    data: latitude
+                })
+
+            }
+
+            //mark as containing RXM-RAWX
+            if (line.includes("\x02\x15") && !has_datatypes["RXM-RAWX"]) {
+                has_datatypes["RXM-RAWX"] = true
+            }
+
+
+        });
+
+        function complete(i) {
+            if (i < dt_mark.length) {
+                if (has_datatypes[dt_mark[i]]) {
+                    Datatype.find({ name: dt_mark[i] }, function(err, datatype) {
+                        if (data_temp[dt_mark[i]]) {
+                            data[datatype[0].id] = data_temp[dt_mark[i]]
+                        }
+                        datatypes.push(datatype[0].id)
+                        complete(i + 1)
+                    })
+                } else {
+                    complete(i + 1)
+                }
+
+            } else {
+                console.log(name)
+                resolve({
+                    startTime: startTime,
+                    endTime: endTime,
+                    name: name,
+                    path: file,
+                    data: data,
+                    datatypes: datatypes
+                })
+
+            }
+        }
+
+
+        rl.on('close', function() {
+            endTime = getTimeFromNmea(lastTime)
+            complete(0)
+        })
+    })
+
+    return promise
 
 }
+
+
+
 
 module.exports = UbxFile
