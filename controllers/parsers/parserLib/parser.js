@@ -46,9 +46,9 @@ var Parser = function(file, dt_mark, dt_record, onLine, onClose) {
                 if (has_datatypes[dt_mark[i]]) {
                     Datatype.find({ name: dt_mark[i] }, function(err, datatype) {
                         if (data_temp[dt_mark[i]]) {
-                            data[datatype[0].id] = data_temp[dt_mark[i]]
+                            data[datatype[0]._id] = data_temp[dt_mark[i]]
                         }
-                        datatypes.push(datatype[0].id)
+                        datatypes.push(datatype[0]._id)
                         complete(i + 1)
                     })
                 } else {

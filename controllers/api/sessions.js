@@ -69,9 +69,20 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
                 }
 
                 parseFiles(filepaths).then(function(files) {
-                    console.log(files)
+                    var commonDataTypes = []
+
                     for (var i = 0; i < files.length; i++) {
                         var file = files[i]
+                        if (i == 0) {
+                            commonDataTypes = file.datatypes
+                        }
+                        if (i != 0) {
+                            for (var j = 0; j < file.datatypes.length; j++) {
+                                if (!_.contains(commonDataTypes, file.datatypes[j])) {
+                                    commonDataTypes = _.without(commonDataTypes, file.datatypes[j])
+                                }
+                            }
+                        }
                         var arr = file.name.split('.')
                         var nameNoExtension = arr[0]
                         dataStartTime = file.startTime < dataStartTime ? file.startTime : dataStartTime
@@ -121,21 +132,27 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
                                             }
                                         }
 
-
-                                        //TODO: finish creating session
                                         var session = new Session({
                                             project: req.params.id,
                                             startTime: dataStartTime,
-                                            endTime: dataEndTime
+                                            endTime: dataEndTime,
+                                            commonDataTypes: commonDataTypes,
+                                            sessionInstances: [],
+                                            processes: []
                                         })
+
+
+                                        //FOR instance in instancesExpected
+                                        //////get instance objectId
+                                        //////add raw data in appropriate formatting
+                                        //////add raw data files
 
                                         //TODO: store ephemeris and observation files for session in GridFS
                                         //TODO: delete ephm and obs raw files
                                         //TODO: Store raw data files in DB
 
-                                        //TODO: Store raw data in DB for each instance file
-                                        //          for this only type we need is nmeaLatLong
-                                        //TODO: Get available datatypes and add process options to session
+                                        //TODO: add processors available to session
+
                                         //TODO: Delete temp CSV file
                                         //TODO: Delete  temp raw dat a files
 

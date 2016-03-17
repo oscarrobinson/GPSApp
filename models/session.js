@@ -1,5 +1,33 @@
 var db = require('../db')
 
+var DataHour = new db.Schema({
+    startHour: Date,
+    dataReference: db.Schema.Types.ObjectId,
+    average: Number
+})
+
+
+var SessionInstanceData = new db.Schema({
+
+    typeId: db.Schema.Types.ObjectId,
+    startTime: Date,
+    endTime: Date,
+    dataList: [DataHour]
+})
+
+
+var SessionInstance = new db.Schema({
+    instanceId: db.Schema.Types.ObjectId,
+    //dataFiles: [file]
+    sessionInstanceData: [SessionInstanceData]
+
+})
+
+var Process = new db.Schema({
+    name: String,
+    runState: String
+})
+
 var Session = new db.Schema({
     project: {
         type: db.Schema.Types.ObjectId,
@@ -13,7 +41,16 @@ var Session = new db.Schema({
     },
     commonDataTypes: {
         type: [db.Schema.Types.ObjectId]
+    },
+    sessionInstances: {
+        type: [SessionInstance]
+    },
+    processes: {
+        type: [Process]
     }
+    //ephemerisFiles
+    //obsFiles
+
 })
 
 var SessionModel = db.model('Session', Session)
