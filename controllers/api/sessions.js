@@ -122,22 +122,23 @@ router.post('/api/projects/:id/sessions', upload.array('files', 4), function(req
                                         }
 
 
+                                        //TODO: finish creating session
+                                        var session = new Session({
+                                            project: req.params.id,
+                                            startTime: dataStartTime,
+                                            endTime: dataEndTime
+                                        })
+
                                         //TODO: store ephemeris and observation files for session in GridFS
                                         //TODO: delete ephm and obs raw files
                                         //TODO: Store raw data files in DB
-                                        //TODO: create session 
+
                                         //TODO: Store raw data in DB for each instance file
                                         //          for this only type we need is nmeaLatLong
                                         //TODO: Get available datatypes and add process options to session
                                         //TODO: Delete temp CSV file
                                         //TODO: Delete  temp raw dat a files
 
-
-                                        var session = new Session({
-                                            project: req.params.id,
-                                            startTime: dataStartTime,
-                                            endTime: dataEndTime
-                                        })
                                         session.save(function(err, result) {
                                             if (err) {
                                                 return res.sendStatus(500)
