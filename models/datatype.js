@@ -15,6 +15,10 @@ var Datatype = new db.Schema({
     isAverageable: {
         type: Boolean,
         required: true
+    },
+    isStoreable: {
+        type: Boolean,
+        required: true
     }
 })
 

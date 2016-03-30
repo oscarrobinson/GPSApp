@@ -22,11 +22,9 @@ router.post('/api/projects/:id/instances', function(req, res, next) {
         }
         var check = ""
         if (template) {
-            console.log(req.body.fields)
             for (var i = 0; i < template.fields.length; i++) {
                 var fieldName = template.fields[i].name.replace(/ /g, '_')
                     //just check we filled all fields
-                console.log(fieldName)
                 check = req.body.fields[fieldName]
                 if (check === "") {
                     check = "OK"

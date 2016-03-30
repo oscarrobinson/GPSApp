@@ -6,6 +6,7 @@ var Parser = require("./parserLib/parser")
 
 
 var UbxFile = function(file) {
+
     var onLine = function(line, has_datatypes, data, startTime, endTime) {
         function getTimeFromNmea(line) {
             var corruptArr = line.split(',')
@@ -15,7 +16,9 @@ var UbxFile = function(file) {
                 if (corruptArr[i].includes("RMC")) {
                     foundFirst = true
                 }
-                timeArr.push(corruptArr[i])
+                if (foundFirst) {
+                    timeArr.push(corruptArr[i])
+                }
             }
             var time = timeArr[1]
             var date = timeArr[9]
@@ -66,7 +69,7 @@ var UbxFile = function(file) {
         }
 
         //mark as containing RXM-RAWX
-        if (line.includes("\x02\x15") && !has_datatypes["RXM-RAWX"]) {
+        if ((line.includes("\x02\x15") || line.includes("\x02\x41")) && !has_datatypes["RXM-RAWX"]) {
             has_datatypes["RXM-RAWX"] = true
         }
 

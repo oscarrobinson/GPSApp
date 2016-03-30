@@ -1,0 +1,10 @@
+<div class="container">
+    <h1>{{ process.namePretty }}</h1>
+    <p ng-hide="extraDataRequired">No Extra Data Required</p>
+    <div ng-repeat="field in process.extraData">
+        {{field}}
+        <input type="text" ng-model="extraData[field]"></input>
+    </div>
+    <button ng-click="start()" class="btn btn-default">Start Process</button>
+</div>
+</div>

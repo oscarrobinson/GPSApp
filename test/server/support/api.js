@@ -3,6 +3,15 @@ var request = require('supertest')
 var router = require('../../../controllers')
 var bodyParser = require('body-parser')
 
+PROJECT_ROOT = "/Users/Oscar/Google Drive/CompSci/COMPSCI-YEAR4/FinalProject/gpsapp/"
+PARSERS = [
+    "ubx"
+]
+
+PROCESSORS = [
+    "ionospheric_correction"
+]
+
 var app = express()
 app.use(require('../../../auth-middleware'))
 app.use(bodyParser.json())

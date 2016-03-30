@@ -4,6 +4,10 @@ PARSERS = [
     "ubx"
 ]
 
+PROCESSORS = [
+    "ionospheric_correction"
+]
+
 var express = require('express')
 
 var app = express()

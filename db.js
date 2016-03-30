@@ -1,4 +1,5 @@
-db = require('mongoose')
+mongoose = require('mongoose')
 
-db.connect('mongodb://localhost/gpsapp')
-module.exports = db
+mongoose.connect('mongodb://localhost/gpsapp')
+
+module.exports = mongoose

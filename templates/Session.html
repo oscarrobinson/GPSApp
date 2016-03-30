@@ -1,3 +1,46 @@
+<style>
+.runstate {
+    width: 180px;
+    float: left;
+    margin-left: 20px;
+}
+
+.floatleft {
+    float: left;
+}
+</style>
 <div class="container">
-    <h1>Session Page</h1>
+    <h1>Session on {{dateString}} at {{timeString}}</h1>
+    <h2>Processes</h2>
+    <div class='list-group'>
+        <p ng-hide="hasProcesses">No Processes Available</p>
+        <a ng-href="{{process.url}}" ng-repeat="process in processes">
+            <button type="button" class='list-group-item' ng-class='isDisabled(process)'>
+                <b class="floatleft">{{ process.name }}</b>
+                <div ng-switch="process.runState" class="runstate">
+                    <div class="runstate" ng-switch-when="2">Complete</div>
+                    <div class="runstate" ng-switch-when="1">Running: Processed {{process.instancesProcessed }}/{{session.sessionInstances.length}}</div>
+                    <div class="runstate" ng-switch-when="-1">Error</div>
+                    <div class="runstate" ng-switch-default>Not Run</div>
+                </div>
+                <span class="badge"><span class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></span>
+            </button>
+        </a>
+    </div>
+    <h2>Instances</h2>
+    <div class='list-group'>
+        <p ng-hide="hasProcesses">No Instances in Project</p>
+        <div class='list-group-item' ng-repeat="instance in session.sessionInstances">
+            <b>ID:</b> {{ instance.instance.id }}
+            <b>Template:</b> {{ instance.instance.type }} </b>
+        </div>
+    </div>
+    <h2>Datatypes</h2>
+    <div class='list-group'>
+        <div class='list-group-item' ng-repeat="datatype in session.datatypes">
+            <b>Name:</b> {{ datatype.name }} <b>ID:</b> {{ datatype.id }}
+        </div>
+    </div>
+    <button class="btn btn-default" ng-click="getCSV()"><span class="glyphicon glyphicon-download" aria-hidden="true"></span> Download Session Data</button>
+    <button class="btn btn-danger" ng-click="delete()"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Delete Session</button>
 </div>

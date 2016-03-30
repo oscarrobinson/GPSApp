@@ -18,14 +18,16 @@ var SessionInstanceData = new db.Schema({
 
 var SessionInstance = new db.Schema({
     instanceId: db.Schema.Types.ObjectId,
-    //dataFiles: [file]
+    dataFiles: [String],
     sessionInstanceData: [SessionInstanceData]
 
 })
 
 var Process = new db.Schema({
     name: String,
-    runState: String
+    indexName: String,
+    runState: String, //Not Run, Running, Run
+    instancesProcessed: Number
 })
 
 var Session = new db.Schema({
@@ -47,6 +49,12 @@ var Session = new db.Schema({
     },
     processes: {
         type: [Process]
+    },
+    obsFiles: {
+        type: [String]
+    },
+    navFiles: {
+        type: [String]
     }
     //ephemerisFiles
     //obsFiles

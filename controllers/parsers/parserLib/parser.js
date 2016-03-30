@@ -18,7 +18,6 @@ var Parser = function(file, dt_mark, dt_record, onLine, onClose) {
 
 
     var promise = new Promise(function(resolve, reject) {
-
         var startTime = 0
         var endTime = 0
         var arr = file.split('/')
@@ -56,6 +55,9 @@ var Parser = function(file, dt_mark, dt_record, onLine, onClose) {
                 }
 
             } else {
+                if (!startTime || !endTime || !name || !file || !data || !datatypes) {
+                    reject("parser error")
+                }
                 resolve({
                     startTime: startTime,
                     endTime: endTime,

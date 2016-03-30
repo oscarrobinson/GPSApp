@@ -83,6 +83,13 @@ angular.module('app').config(function($routeProvider) {
             loggedIn: onlyLoggedIn
         }
     })
+    $routeProvider.when('/projects/:id/sessions/:sessionId/:processName', {
+        controller: 'ProcessCtrl',
+        templateUrl: 'Process.html',
+        resolve: {
+            loggedIn: onlyLoggedIn
+        }
+    })
     $routeProvider.when('/login', {
         controller: 'LoginCtrl',
         templateUrl: 'Login.html'
@@ -173,6 +180,33 @@ angular.module('app').service('TemplatesSvc', function($http) {
 angular.module('app').service('SessionSvc', function($http) {
     this.getProjectSessions = function(id) {
         return $http.get('/api/projects/' + id + '/sessions')
+    }
+
+    this.getSession = function(projectId, sessionId) {
+        return $http.get('/api/projects/' + projectId + "/sessions/" + sessionId)
+    }
+    this.getDataCsvs = function(projectId, sessionId) {
+        return $http.get('/api/projects/' + projectId + '/sessions/' + sessionId + '/getAllDataCsv', {
+            responseType: 'arraybuffer'
+        })
+    }
+    this.deleteSession = function(projectId, sessionId) {
+        return $http.delete('/api/projects/' + projectId + '/sessions/' + sessionId)
+    }
+})
+
+angular.module('app').service('ProcessSvc', function($http) {
+    this.getProcess = function(name) {
+        return $http.get('/api/process/' + name)
+    }
+    this.startProcess = function(project, session, processName, extraData) {
+        return $http.post('/api/projects/' + project + '/sessions/' + session + '/runprocess', {
+            name: processName,
+            extraData: extraData
+        })
+    }
+    this.pollProcess = function(project, session) {
+        return $http.get('/api/projects/' + project + '/sessions/' + session + "/processProgress")
     }
 })
 
@@ -658,8 +692,116 @@ angular.module('app').controller('SessionCreateCtrl', function($scope, $routePar
     }
 })
 
-angular.module('app').controller('SessionCtrl', function($scope, $routeParams, $location, toaster, $timeout) {
+angular.module('app').controller('SessionCtrl', function($scope, $interval, $routeParams, $location, toaster, $timeout, SessionSvc, InstancesSvc, ProcessSvc) {
+    var processRunning = 0
+    var prevProcessRunning = 0
 
+    function refreshSession() {
+        SessionSvc.getSession($routeParams.id, $routeParams.sessionId).then(function(res) {
+            $scope.session = res.data
+            var startTime = new Date(res.data.startTime)
+            $scope.dateString = startTime.getDate() + "/" + startTime.getMonth() + "/" + (startTime.getYear() - 100)
+            $scope.timeString = startTime.getHours() + ":" + startTime.getMinutes()
+
+            $scope.processes = annotateProcesses($scope.session.processes)
+
+
+            function annotateProcesses(processes) {
+                for (var i = 0; i < processes.length; i++) {
+                    if (processes[i].runState === "Not Run") {
+                        processes[i].runState = 0
+                        processes[i].hasRun = false
+                        processes[i].url = "/#/projects/" + $scope.session.project + "/sessions/" + $scope.session._id + "/" + processes[i].indexName
+                    } else if (processes[i].runState === "Running") {
+                        processes[i].runState = 1
+                        processes[i].hasRun = true
+                        processes[i].url = ""
+                        processRunning += 1
+                    } else if (processes[i].runState === "Error") {
+                        processes[i].runState = -1
+                        processes[i].hasRun = true
+                        processes[i].url = ""
+                    } else {
+                        processes[i].runState = 2
+                        processes[i].hasRun = true
+                        processes[i].url = ""
+                    }
+                    return processes
+                        //$scope.session.processes[i].runState = 2
+                }
+            }
+
+            prevProcessRunning = processRunning
+
+
+            if (processRunning) {
+                var pollInterval = $interval(function() {
+                    ProcessSvc.pollProcess($routeParams.id, $routeParams.sessionId).then(function(res) {
+                        processRunning = 0
+                        $scope.processes = annotateProcesses(res.data)
+                        if (processRunning < prevProcessRunning) {
+                            refreshSession()
+                        }
+                        prevProcessRunning = processRunning
+                        if (processRunning == 0) {
+                            $interval.cancel(pollInterval)
+                        }
+                    })
+                }, 500)
+
+            }
+            $scope.hasProcesses = false
+            if ($scope.session.processes.length > 0) {
+                $scope.hasProcesses = true
+            }
+
+            $scope.isDisabled = function(process) {
+                if (process.runState == 0) {
+                    return ""
+                } else {
+                    return "disabled"
+                }
+            }
+
+
+            function getInstance(i) {
+                if (i < $scope.session.sessionInstances.length) {
+                    InstancesSvc.getInstance($routeParams.id, $scope.session.sessionInstances[i].instanceId).then(function(res) {
+                        $scope.session.sessionInstances[i]["instance"] = res.data
+                        getInstance(i + 1)
+                    })
+                }
+            }
+
+            getInstance(0)
+
+
+            $scope.getCSV = function() {
+                SessionSvc.getDataCsvs($routeParams.id, $routeParams.sessionId).then(function(res) {
+
+                    var a = document.createElement('a');
+                    var blob = new Blob([res.data], { 'type': "application/octet-stream" });
+                    a.href = URL.createObjectURL(blob);
+                    a.download = "data.zip";
+                    a.click();
+                })
+            }
+
+            $scope.delete = function() {
+                SessionSvc.deleteSession($routeParams.id, $routeParams.sessionId).then(function(res) {
+                    toaster.pop({
+                        type: 'success',
+                        title: "Session Deleted",
+                        showCloseButton: true,
+                        timeout: 3000
+                    });
+                    $location.path('/projects/' + $routeParams.id)
+                })
+            }
+
+        })
+    }
+    refreshSession()
 })
 
 angular.module('app').controller('LoginCtrl', function($routeParams, $rootScope, $scope, $location, UserSvc, toaster) {
@@ -733,6 +875,56 @@ angular.module('app').controller('LogoutCtrl', function($scope, $location, toast
     $location.path('/login')
 })
 
+angular.module('app').controller('ProcessCtrl', function($scope, $routeParams, toaster, $location, ProcessSvc) {
+    ProcessSvc.getProcess($routeParams.processName).then(function(processObj) {
+        $scope.process = processObj.data
+        $scope.extraData = {}
+        for (var i = 0; i < $scope.process.extraData.length; i++) {
+            $scope.extraData[$scope.process.extraData[i]] = ""
+        }
+
+        $scope.extraDataRequired = false
+
+        if (Object.keys($scope.extraData).length > 0) {
+            $scope.extraDataRequired = true
+        }
+
+
+        $scope.start = function() {
+            ProcessSvc.startProcess($routeParams.id, $routeParams.sessionId, $routeParams.processName, $scope.extraData).then(function(res) {
+
+                toaster.pop({
+                    type: 'success',
+                    title: "Process " + $scope.process.namePretty + " started",
+                    showCloseButton: true,
+                    timeout: 3000
+                });
+                $location.path("/projects/" + $routeParams.id + "/sessions/" + $routeParams.sessionId)
+
+            }).catch(function(res) {
+                if (res.status == 400) {
+                    if (res.data == "Already Run") {
+                        toaster.pop({
+                            type: 'error',
+                            title: "Error",
+                            body: "Process already ran",
+                            showCloseButton: true,
+                            timeout: 3000
+                        });
+                    } else {
+                        toaster.pop({
+                            type: 'error',
+                            title: "Error",
+                            body: "The process could not be started, check extra input values given",
+                            showCloseButton: true,
+                            timeout: 3000
+                        });
+                    }
+                }
+            })
+        }
+    })
+})
 
 //DIRECTIVES
 angular.module('app').directive('timepicker', function() {
