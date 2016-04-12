@@ -5,7 +5,7 @@ PARSERS = [
 ]
 
 PROCESSORS = [
-    "ionospheric_correction"
+    "rtk_positioning"
 ]
 
 var express = require('express')

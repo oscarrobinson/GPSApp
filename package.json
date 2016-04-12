@@ -19,6 +19,7 @@
     "unzip2": "^0.2.5"
   },
   "devDependencies": {
+    "blanket": "^1.2.3",
     "chai": "^3.4.1",
     "jsonwebtoken": "^5.7.0",
     "karma": "^0.13.19",

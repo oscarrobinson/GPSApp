@@ -256,13 +256,13 @@ describe('Session Tests', function() {
         api.post('/api/projects/' + projectId + '/sessions/' + sessionId + '/runprocess')
             .set('X-Auth', tokenA)
             .send({
-                name: "ionospheric_correction"
+                name: "rtk_positioning"
             })
             .end(function(err, res) {
                 expect(res.status).to.equal(200)
                 Session.findOne({ _id: sessionId }, function(err, session) {
                     for (var i = 0; i < session.processes.length; i++) {
-                        if ("ionospheric_correction" == session.processes[i].indexName) {
+                        if ("rtk_positioning" == session.processes[i].indexName) {
                             expect(session.processes[i].runState).to.equal("Running")
                         }
                     }

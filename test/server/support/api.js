@@ -9,7 +9,7 @@ PARSERS = [
 ]
 
 PROCESSORS = [
-    "ionospheric_correction"
+    "rtk_positioning"
 ]
 
 var app = express()

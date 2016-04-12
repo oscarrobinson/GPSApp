@@ -23,15 +23,15 @@ var OutputParser = function(file) {
                 startTime = timestamp
             }
             endTime = timestamp
-            has_datatypes["Ionospheric Corrected Longitude"] = true
+            has_datatypes["RTK Longitude"] = true
 
-            has_datatypes["Ionospheric Corrected Latitude"] = true
+            has_datatypes["RTK Latitude"] = true
 
-            data["Ionospheric Corrected Longitude"].push({
+            data["RTK Longitude"].push({
                 timestamp: timestamp,
                 data: line[7]
             })
-            data["Ionospheric Corrected Latitude"].push({
+            data["RTK Latitude"].push({
                 timestamp: timestamp,
                 data: line[4]
             })
@@ -44,7 +44,7 @@ var OutputParser = function(file) {
         return [has_datatypes, data, startTime, endTime]
     }
 
-    return Parser(file, ["Ionospheric Corrected Longitude", "Ionospheric Corrected Latitude"], ["Ionospheric Corrected Longitude", "Ionospheric Corrected Latitude"], onLine, onClose)
+    return Parser(file, ["RTK Longitude", "RTK Latitude"], ["RTK Longitude", "RTK Latitude"], onLine, onClose)
 
 }
 

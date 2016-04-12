@@ -3,13 +3,13 @@ var fs = require('fs')
 var Grid = require('gridfs-stream')
 var db = require('../../db')
 var _ = require('underscore')
-var parser = require('./ionospheric_correction_parser')
+var parser = require('./rtk_positioning_parser')
 
 var Processor = function() {
 
     var datatypesRequired = ["56e9929b100347700eeceeee"]
-    var name = "ionospheric_correction"
-    var namePretty = "Ionospheric Correction"
+    var name = "rtk_positioning"
+    var namePretty = "RTK Positioning"
     var extraData = [] // ["fieldName", "fieldName2", ....]
 
 
